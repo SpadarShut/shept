@@ -1,0 +1,8 @@
+{
+  "name": "shept",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter mobile start",
+    "android": "pnpm --filter mobile android"
+  }
+}

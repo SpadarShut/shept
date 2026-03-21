@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["SheptNativeModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.sheptnative.SheptNativeModule"]
+  }
+}
