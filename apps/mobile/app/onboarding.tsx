@@ -14,32 +14,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useSettingsStore } from "../src/stores/settings-store";
+import { LANGUAGES } from "../src/constants/languages";
 
 const TOTAL_STEPS = 8;
-
-interface Language {
-  code: string;
-  name: string;
-}
-
-const LANGUAGES: Language[] = [
-  { code: "be", name: "Belarusian" },
-  { code: "en", name: "English" },
-  { code: "ru", name: "Russian" },
-  { code: "uk", name: "Ukrainian" },
-  { code: "es", name: "Spanish" },
-  { code: "fr", name: "French" },
-  { code: "de", name: "German" },
-  { code: "pl", name: "Polish" },
-  { code: "pt", name: "Portuguese" },
-  { code: "zh", name: "Chinese" },
-  { code: "ja", name: "Japanese" },
-  { code: "ko", name: "Korean" },
-  { code: "ar", name: "Arabic" },
-  { code: "hi", name: "Hindi" },
-  { code: "tr", name: "Turkish" },
-  { code: "it", name: "Italian" },
-];
 
 function StepDots({ current, total }: { current: number; total: number }) {
   return (

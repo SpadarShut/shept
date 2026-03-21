@@ -13,41 +13,25 @@ import {
   Platform,
 } from "react-native";
 import { useSettingsStore } from "../src/stores/settings-store";
-
-interface Language {
-  code: string;
-  name: string;
-}
-
-const LANGUAGES: Language[] = [
-  { code: "be", name: "Belarusian" },
-  { code: "en", name: "English" },
-  { code: "ru", name: "Russian" },
-  { code: "uk", name: "Ukrainian" },
-  { code: "es", name: "Spanish" },
-  { code: "fr", name: "French" },
-  { code: "de", name: "German" },
-  { code: "pl", name: "Polish" },
-  { code: "pt", name: "Portuguese" },
-  { code: "zh", name: "Chinese" },
-  { code: "ja", name: "Japanese" },
-  { code: "ko", name: "Korean" },
-  { code: "ar", name: "Arabic" },
-  { code: "hi", name: "Hindi" },
-  { code: "tr", name: "Turkish" },
-  { code: "it", name: "Italian" },
-];
+import { LANGUAGES } from "../src/constants/languages";
 
 export default function SettingsScreen() {
-  const store = useSettingsStore();
+  const sttProvider = useSettingsStore((s) => s.sttProvider);
+  const elevenLabsApiKey = useSettingsStore((s) => s.elevenLabsApiKey);
+  const googleCloudApiKey = useSettingsStore((s) => s.googleCloudApiKey);
+  const languages = useSettingsStore((s) => s.languages);
+  const primaryLanguage = useSettingsStore((s) => s.primaryLanguage);
+  const autoStart = useSettingsStore((s) => s.autoStart);
+  const set = useSettingsStore((s) => s.set);
+  const setMany = useSettingsStore((s) => s.setMany);
   const [langSearch, setLangSearch] = useState("");
 
   const toggleLang = (code: string) => {
-    const next = store.languages.includes(code)
-      ? store.languages.filter((c) => c !== code)
-      : [...store.languages, code];
-    const primary = next.length > 0 ? (next.includes(store.primaryLanguage) ? store.primaryLanguage : next[0]) : "";
-    store.setMany({ languages: next, primaryLanguage: primary });
+    const next = languages.includes(code)
+      ? languages.filter((c) => c !== code)
+      : [...languages, code];
+    const primary = next.length > 0 ? (next.includes(primaryLanguage) ? primaryLanguage : next[0]) : "";
+    setMany({ languages: next, primaryLanguage: primary });
   };
 
   const filteredLangs = LANGUAGES.filter((l) =>
@@ -70,14 +54,14 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.providerBtn,
-              store.sttProvider === "elevenlabs" && styles.providerBtnActive,
+              sttProvider === "elevenlabs" && styles.providerBtnActive,
             ]}
-            onPress={() => store.set("sttProvider", "elevenlabs")}
+            onPress={() => set("sttProvider", "elevenlabs")}
           >
             <Text
               style={[
                 styles.providerBtnText,
-                store.sttProvider === "elevenlabs" && styles.providerBtnTextActive,
+                sttProvider === "elevenlabs" && styles.providerBtnTextActive,
               ]}
             >
               ElevenLabs
@@ -86,14 +70,14 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.providerBtn,
-              store.sttProvider === "google" && styles.providerBtnActive,
+              sttProvider === "google" && styles.providerBtnActive,
             ]}
-            onPress={() => store.set("sttProvider", "google")}
+            onPress={() => set("sttProvider", "google")}
           >
             <Text
               style={[
                 styles.providerBtnText,
-                store.sttProvider === "google" && styles.providerBtnTextActive,
+                sttProvider === "google" && styles.providerBtnTextActive,
               ]}
             >
               Google Cloud
@@ -109,8 +93,8 @@ export default function SettingsScreen() {
           secureTextEntry
           placeholder="Enter API key"
           placeholderTextColor="#999"
-          value={store.elevenLabsApiKey}
-          onChangeText={(v) => store.set("elevenLabsApiKey", v)}
+          value={elevenLabsApiKey}
+          onChangeText={(v) => set("elevenLabsApiKey", v)}
           autoCapitalize="none"
           autoCorrect={false}
         />
@@ -129,8 +113,8 @@ export default function SettingsScreen() {
           secureTextEntry
           placeholder="Enter API key"
           placeholderTextColor="#999"
-          value={store.googleCloudApiKey}
-          onChangeText={(v) => store.set("googleCloudApiKey", v)}
+          value={googleCloudApiKey}
+          onChangeText={(v) => set("googleCloudApiKey", v)}
           autoCapitalize="none"
           autoCorrect={false}
         />
@@ -154,9 +138,9 @@ export default function SettingsScreen() {
           value={langSearch}
           onChangeText={setLangSearch}
         />
-        {store.languages.length > 0 && (
+        {languages.length > 0 && (
           <View style={styles.chipsRow}>
-            {store.languages.map((code) => {
+            {languages.map((code) => {
               const lang = LANGUAGES.find((l) => l.code === code);
               return (
                 <TouchableOpacity
@@ -171,7 +155,7 @@ export default function SettingsScreen() {
           </View>
         )}
         {filteredLangs.map((item) => {
-          const selected = store.languages.includes(item.code);
+          const selected = languages.includes(item.code);
           return (
             <TouchableOpacity
               key={item.code}
@@ -197,8 +181,8 @@ export default function SettingsScreen() {
             </Text>
           </View>
           <Switch
-            value={store.autoStart}
-            onValueChange={(v) => store.set("autoStart", v)}
+            value={autoStart}
+            onValueChange={(v) => set("autoStart", v)}
             trackColor={{ true: "#333" }}
           />
         </View>
