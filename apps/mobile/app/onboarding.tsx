@@ -129,6 +129,7 @@ export default function OnboardingScreen() {
   };
 
   const requestMic = async () => {
+    if (Platform.OS !== "android") { return; }
     const result = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
     );
@@ -147,6 +148,18 @@ export default function OnboardingScreen() {
   const canNext = (): boolean => {
     if (step === 1) {
       return selectedLangs.length > 0;
+    }
+    if (step === 2) {
+      return notifGranted;
+    }
+    if (step === 3) {
+      return overlayGranted;
+    }
+    if (step === 4) {
+      return a11yGranted;
+    }
+    if (step === 5) {
+      return micGranted;
     }
     if (step === 6) {
       return elevenLabsKey.trim().length > 0 || googleKey.trim().length > 0;
