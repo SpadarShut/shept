@@ -50,6 +50,7 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
 
     private var autoHide = true
     private val mainHandler = Handler(Looper.getMainLooper())
+    private lateinit var configReader: ConfigReader
 
     // Drag state
     private var initialX = 0
@@ -65,12 +66,15 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        configReader = ConfigReader(this)
         AccessibilityBridge.addObserver(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         showForegroundNotification()
-        createOverlayButton()
+        if (overlayView == null) {
+            createOverlayButton()
+        }
         currentStatus = "idle"
         return START_STICKY
     }
@@ -196,10 +200,12 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                 }
                 Thread {
                     try {
-                        val config = ConfigReader(this)
-                        val provider = config.getProvider()
-                        val apiKey = config.getApiKey()
-                        val language = config.getPrimaryLanguage().ifEmpty { "en" }
+                        val provider = configReader.getProvider()
+                        val apiKey = configReader.getApiKey()
+                        val language = configReader.getPrimaryLanguage().ifEmpty { "en" }
+                        if (apiKey.isEmpty()) {
+                            throw SttException("No API key configured", 0)
+                        }
                         Log.d(TAG, "Starting STT: provider=$provider, language=$language")
                         val text = SttClient.transcribe(file, provider, apiKey, language)
                         Log.d(TAG, "STT result: $text")
