@@ -91,18 +91,23 @@ class SheptNativeModule : Module() {
       return@Function prefs.getString("data", null)
     }
 
-    // --- Service control (stubs) ---
+    // --- Service control ---
 
     Function("startOverlay") {
-      // TODO: start OverlayService (Task 3)
+      val intent = Intent(context, OverlayService::class.java)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        context.startForegroundService(intent)
+      } else {
+        context.startService(intent)
+      }
     }
 
     Function("stopOverlay") {
-      // TODO: stop OverlayService (Task 3)
+      context.stopService(Intent(context, OverlayService::class.java))
     }
 
     Function("getServiceStatus") {
-      return@Function "idle"
+      return@Function OverlayService.currentStatus
     }
   }
 }
