@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">Shept uses accessibility to detect text fields and inject transcribed text.</string>
+</resources>

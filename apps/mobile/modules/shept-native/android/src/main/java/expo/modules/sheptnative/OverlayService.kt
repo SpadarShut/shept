@@ -23,7 +23,7 @@ import android.widget.ProgressBar
 import androidx.core.app.NotificationCompat
 import java.io.File
 
-class OverlayService : Service() {
+class OverlayService : Service(), AccessibilityBridge.FocusObserver {
 
     companion object {
         private const val TAG = "OverlayService"
@@ -59,6 +59,7 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        AccessibilityBridge.addObserver(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -70,11 +71,20 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        AccessibilityBridge.removeObserver(this)
         if (currentStatus == "recording") {
             stopRecording()
         }
         removeOverlay()
         currentStatus = "idle"
+    }
+
+    override fun onFocusChanged(hasFocus: Boolean, packageName: String) {
+        if (hasFocus) {
+            Log.d(TAG, "Text field focused in: $packageName")
+        } else {
+            Log.d(TAG, "Text field focus lost")
+        }
     }
 
     private fun createNotificationChannel() {
@@ -182,6 +192,10 @@ class OverlayService : Service() {
                         val text = SttClient.transcribe(file, provider, apiKey, language)
                         Log.d(TAG, "STT result: $text")
                         lastTranscription = text
+                        if (text.isNotEmpty()) {
+                            val injected = AccessibilityBridge.injectText(text)
+                            Log.d(TAG, "Text injection result: $injected")
+                        }
                     } catch (e: Exception) {
                         Log.e(TAG, "STT failed", e)
                         lastTranscription = ""

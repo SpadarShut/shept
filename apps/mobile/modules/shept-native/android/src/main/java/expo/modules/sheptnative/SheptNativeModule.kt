@@ -109,5 +109,9 @@ class SheptNativeModule : Module() {
     Function("getServiceStatus") {
       return@Function OverlayService.currentStatus
     }
+
+    Function("injectText") { text: String ->
+      return@Function AccessibilityBridge.injectText(text)
+    }
   }
 }
