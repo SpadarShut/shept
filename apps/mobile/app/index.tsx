@@ -62,7 +62,7 @@ export default function HomeScreen() {
 
   const isRunning = serviceStatus !== "idle";
 
-  const handleToggleService = () => {
+  const handleToggleService = async () => {
     if (Platform.OS !== "android") {
       return;
     }
@@ -70,8 +70,11 @@ export default function HomeScreen() {
       SheptNative.stopOverlay();
       setServiceStatus("idle");
     } else {
+      if (!SheptNative.isOverlayPermissionGranted()) {
+        SheptNative.requestOverlayPermission();
+        return;
+      }
       SheptNative.startOverlay();
-      // Poll after short delay to pick up new status
       setTimeout(pollStatus, 500);
     }
   };

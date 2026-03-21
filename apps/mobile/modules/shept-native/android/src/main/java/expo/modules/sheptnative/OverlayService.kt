@@ -48,6 +48,7 @@ class OverlayService : Service() {
     private var initialTouchX = 0f
     private var initialTouchY = 0f
     private var isDragging = false
+    private var transcribingRunnable: Runnable? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -69,6 +70,10 @@ class OverlayService : Service() {
         super.onDestroy()
         if (currentStatus == "recording") {
             stopRecording()
+        }
+        if (transcribingRunnable != null) {
+            overlayView?.removeCallbacks(transcribingRunnable)
+            transcribingRunnable = null
         }
         removeOverlay()
         currentStatus = "idle"
@@ -164,10 +169,11 @@ class OverlayService : Service() {
                 // (STT will be wired in Task 4)
                 applyTranscribingStyle()
                 currentStatus = "transcribing"
-                overlayView?.postDelayed({
+                transcribingRunnable = Runnable {
                     applyIdleStyle()
                     currentStatus = "idle"
-                }, 1000)
+                }
+                overlayView?.postDelayed(transcribingRunnable!!, 1000)
             }
         }
     }
@@ -218,6 +224,7 @@ class OverlayService : Service() {
             Log.e(TAG, "Failed to stop recording", e)
             mediaRecorder?.release()
             mediaRecorder = null
+            outputFile = null
         }
     }
 
@@ -258,7 +265,11 @@ class OverlayService : Service() {
 
     private fun removeOverlay() {
         if (overlayView != null) {
-            windowManager?.removeView(overlayView)
+            try {
+                windowManager?.removeView(overlayView)
+            } catch (e: Exception) {
+                Log.w(TAG, "Overlay already removed", e)
+            }
             overlayView = null
         }
     }
