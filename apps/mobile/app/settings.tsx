@@ -242,6 +242,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
+    color: "#333"
   },
   linkText: {
     fontSize: 13,
