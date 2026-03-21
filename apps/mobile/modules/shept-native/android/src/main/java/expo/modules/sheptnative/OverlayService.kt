@@ -32,6 +32,9 @@ class OverlayService : Service() {
 
         @Volatile
         var currentStatus: String = "idle"
+
+        @Volatile
+        var lastTranscription: String = ""
     }
 
     private var windowManager: WindowManager? = null
@@ -48,7 +51,6 @@ class OverlayService : Service() {
     private var initialTouchX = 0f
     private var initialTouchY = 0f
     private var isDragging = false
-    private var transcribingRunnable: Runnable? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -70,10 +72,6 @@ class OverlayService : Service() {
         super.onDestroy()
         if (currentStatus == "recording") {
             stopRecording()
-        }
-        if (transcribingRunnable != null) {
-            overlayView?.removeCallbacks(transcribingRunnable)
-            transcribingRunnable = null
         }
         removeOverlay()
         currentStatus = "idle"
@@ -165,15 +163,39 @@ class OverlayService : Service() {
             }
             "recording" -> {
                 stopRecording()
-                // Transition to transcribing briefly, then back to idle
-                // (STT will be wired in Task 4)
                 applyTranscribingStyle()
                 currentStatus = "transcribing"
-                transcribingRunnable = Runnable {
+                val file = outputFile
+                if (file == null || !file.exists()) {
+                    Log.e(TAG, "No recording file available for STT")
                     applyIdleStyle()
                     currentStatus = "idle"
+                    return
                 }
-                overlayView?.postDelayed(transcribingRunnable!!, 1000)
+                Thread {
+                    try {
+                        val config = ConfigReader(this)
+                        val provider = config.getProvider()
+                        val apiKey = config.getApiKey()
+                        val language = config.getPrimaryLanguage().ifEmpty { "en" }
+                        Log.d(TAG, "Starting STT: provider=$provider, language=$language")
+                        val text = SttClient.transcribe(file, provider, apiKey, language)
+                        Log.d(TAG, "STT result: $text")
+                        lastTranscription = text
+                    } catch (e: Exception) {
+                        Log.e(TAG, "STT failed", e)
+                    } finally {
+                        try {
+                            file.delete()
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to delete recording file", e)
+                        }
+                        overlayView?.post {
+                            applyIdleStyle()
+                            currentStatus = "idle"
+                        }
+                    }
+                }.start()
             }
         }
     }
