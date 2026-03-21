@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,13 +10,27 @@ import {
   Linking,
   KeyboardAvoidingView,
   Platform,
+  AppState,
+  PermissionsAndroid,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useSettingsStore } from "../src/stores/settings-store";
 import { LANGUAGES } from "../src/constants/languages";
+import SheptNative from "../modules/shept-native";
 
 const TOTAL_STEPS = 8;
+
+function useAppStateResume(callback: () => void) {
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        callback();
+      }
+    });
+    return () => { sub.remove(); };
+  }, [callback]);
+}
 
 function StepDots({ current, total }: { current: number; total: number }) {
   return (
@@ -35,18 +49,26 @@ function PermissionStep({
   title,
   description,
   buttonLabel,
+  granted,
+  onPress,
 }: {
   title: string;
   description: string;
   buttonLabel: string;
+  granted: boolean;
+  onPress: () => void;
 }) {
   return (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>{title}</Text>
       <Text style={styles.stepDesc}>{description}</Text>
-      <TouchableOpacity style={styles.permBtn} onPress={() => {}}>
-        <Text style={styles.permBtnText}>{buttonLabel}</Text>
-      </TouchableOpacity>
+      {granted ? (
+        <Text style={styles.grantedText}>Granted</Text>
+      ) : (
+        <TouchableOpacity style={styles.permBtn} onPress={onPress}>
+          <Text style={styles.permBtnText}>{buttonLabel}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -59,6 +81,59 @@ export default function OnboardingScreen() {
   const [elevenLabsKey, setElevenLabsKey] = useState("");
   const [googleKey, setGoogleKey] = useState("");
   const setMany = useSettingsStore((s) => s.setMany);
+
+  // Permission states
+  const [notifGranted, setNotifGranted] = useState(false);
+  const [overlayGranted, setOverlayGranted] = useState(false);
+  const [a11yGranted, setA11yGranted] = useState(false);
+  const [micGranted, setMicGranted] = useState(false);
+
+  const recheckPermissions = useCallback(() => {
+    if (Platform.OS !== "android") {
+      return;
+    }
+    try { setNotifGranted(SheptNative.isNotificationPermissionGranted()); } catch {}
+    try { setOverlayGranted(SheptNative.isOverlayPermissionGranted()); } catch {}
+    try { setA11yGranted(SheptNative.isAccessibilityEnabled()); } catch {}
+    PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO)
+      .then(setMicGranted)
+      .catch(() => {});
+  }, []);
+
+  // Check on mount
+  useEffect(() => { recheckPermissions(); }, [recheckPermissions]);
+
+  // Re-check when app resumes (user returns from settings)
+  useAppStateResume(recheckPermissions);
+
+  const requestNotification = async () => {
+    if (Platform.OS !== "android") { return; }
+    if (Platform.Version >= 33) {
+      const result = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+      );
+      setNotifGranted(result === PermissionsAndroid.RESULTS.GRANTED);
+    } else {
+      setNotifGranted(true);
+    }
+  };
+
+  const requestOverlay = () => {
+    if (Platform.OS !== "android") { return; }
+    SheptNative.requestOverlayPermission();
+  };
+
+  const openA11y = () => {
+    if (Platform.OS !== "android") { return; }
+    SheptNative.openAccessibilitySettings();
+  };
+
+  const requestMic = async () => {
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
+    );
+    setMicGranted(result === PermissionsAndroid.RESULTS.GRANTED);
+  };
 
   const toggleLang = useCallback((code: string) => {
     setSelectedLangs((prev) => {
@@ -182,6 +257,8 @@ export default function OnboardingScreen() {
             title="Notification Permission"
             description="Required to keep the voice service running."
             buttonLabel="Allow Notifications"
+            granted={notifGranted}
+            onPress={requestNotification}
           />
         );
 
@@ -191,6 +268,8 @@ export default function OnboardingScreen() {
             title="Overlay Permission"
             description="Allows the mic button to float over other apps."
             buttonLabel="Allow Overlay"
+            granted={overlayGranted}
+            onPress={requestOverlay}
           />
         );
 
@@ -201,12 +280,18 @@ export default function OnboardingScreen() {
             <Text style={styles.stepDesc}>
               Detects text fields and injects transcribed text.
             </Text>
-            <Text style={styles.stepHint}>
-              Scroll to find Shept and enable it.
-            </Text>
-            <TouchableOpacity style={styles.permBtn} onPress={() => {}}>
-              <Text style={styles.permBtnText}>Open Accessibility Settings</Text>
-            </TouchableOpacity>
+            {a11yGranted ? (
+              <Text style={styles.grantedText}>Enabled</Text>
+            ) : (
+              <>
+                <Text style={styles.stepHint}>
+                  Scroll to find Shept and enable it.
+                </Text>
+                <TouchableOpacity style={styles.permBtn} onPress={openA11y}>
+                  <Text style={styles.permBtnText}>Open Accessibility Settings</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         );
 
@@ -216,6 +301,8 @@ export default function OnboardingScreen() {
             title="Microphone Permission"
             description="Required to capture your voice for transcription."
             buttonLabel="Allow Microphone"
+            granted={micGranted}
+            onPress={requestMic}
           />
         );
 
@@ -413,6 +500,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
     fontStyle: "italic",
+  },
+  grantedText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#16a34a",
+    textAlign: "center",
+    marginTop: 32,
   },
   searchInput: {
     borderWidth: 1,

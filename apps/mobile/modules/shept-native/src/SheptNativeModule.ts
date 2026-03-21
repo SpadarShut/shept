@@ -1,12 +1,16 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { requireNativeModule } from 'expo';
 
-import { SheptNativeModuleEvents } from './SheptNative.types';
-
-declare class SheptNativeModule extends NativeModule<SheptNativeModuleEvents> {
-  PI: number;
-  hello(): string;
-  setValueAsync(value: string): Promise<void>;
+interface SheptNativeModuleType {
+  isOverlayPermissionGranted(): boolean;
+  requestOverlayPermission(): void;
+  isAccessibilityEnabled(): boolean;
+  openAccessibilitySettings(): void;
+  isNotificationPermissionGranted(): boolean;
+  saveSettings(json: string): void;
+  getSettings(): string | null;
+  startOverlay(): void;
+  stopOverlay(): void;
+  getServiceStatus(): string;
 }
 
-// This call loads the native module object from the JSI.
-export default requireNativeModule<SheptNativeModule>('SheptNative');
+export default requireNativeModule<SheptNativeModuleType>('SheptNative');

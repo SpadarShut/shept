@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
+import SheptNative from "../../modules/shept-native";
 
 const STORE_KEY = "shept-settings";
 
@@ -40,7 +42,15 @@ function persist(state: SheptSettings) {
     autoStart: state.autoStart,
     onboardingComplete: state.onboardingComplete,
   };
-  SecureStore.setItemAsync(STORE_KEY, JSON.stringify(data)).catch(console.error);
+  const json = JSON.stringify(data);
+  SecureStore.setItemAsync(STORE_KEY, json).catch(console.error);
+  if (Platform.OS === "android") {
+    try {
+      SheptNative.saveSettings(json);
+    } catch (e) {
+      console.error("Failed to save to SharedPreferences", e);
+    }
+  }
 }
 
 export const useSettingsStore = create<SettingsStore>()((setState, getState) => ({
@@ -49,7 +59,22 @@ export const useSettingsStore = create<SettingsStore>()((setState, getState) => 
 
   hydrate: async () => {
     try {
-      const raw = await SecureStore.getItemAsync(STORE_KEY);
+      let raw: string | null = null;
+
+      // Try SharedPreferences first on Android
+      if (Platform.OS === "android") {
+        try {
+          raw = SheptNative.getSettings();
+        } catch {
+          // fall through to SecureStore
+        }
+      }
+
+      // Fall back to SecureStore
+      if (!raw) {
+        raw = await SecureStore.getItemAsync(STORE_KEY);
+      }
+
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<SheptSettings>;
         setState({ ...defaults, ...parsed, hydrated: true });
