@@ -184,6 +184,7 @@ class OverlayService : Service() {
                         lastTranscription = text
                     } catch (e: Exception) {
                         Log.e(TAG, "STT failed", e)
+                        lastTranscription = ""
                     } finally {
                         try {
                             file.delete()
