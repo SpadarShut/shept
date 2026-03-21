@@ -1,8 +1,11 @@
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
 export default function RootLayout() {
   return (
-    <Stack>
+    <>
+      <StatusBar style="dark" />
+      <Stack>
       <Stack.Screen name="index" options={{ title: "Shept" }} />
       <Stack.Screen name="settings" options={{ title: "Settings" }} />
       <Stack.Screen
@@ -10,5 +13,6 @@ export default function RootLayout() {
         options={{ headerShown: false, gestureEnabled: false }}
       />
     </Stack>
+    </>
   );
 }
