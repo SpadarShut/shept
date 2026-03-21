@@ -20,7 +20,13 @@ object AccessibilityBridge {
 
     @Volatile
     var focusedNode: AccessibilityNodeInfo? = null
-        @Synchronized set
+        @Synchronized set(value) {
+            val old = field
+            field = value
+            if (old != null && old != value) {
+                try { old.recycle() } catch (_: Exception) {}
+            }
+        }
 
     private val observers = mutableListOf<FocusObserver>()
 
@@ -36,11 +42,13 @@ object AccessibilityBridge {
 
     @Synchronized
     fun notifyFocusChanged(hasFocus: Boolean, packageName: String) {
-        for (observer in observers) {
+        val snapshot = ArrayList(observers)
+        for (observer in snapshot) {
             observer.onFocusChanged(hasFocus, packageName)
         }
     }
 
+    @Synchronized
     fun injectText(text: String): Boolean {
         val node = focusedNode ?: return false
 
