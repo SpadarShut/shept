@@ -11,6 +11,7 @@ interface SheptNativeModuleType {
   startOverlay(): void;
   stopOverlay(): void;
   getServiceStatus(): string;
+  getLastTranscription(): string;
 }
 
 export default requireNativeModule<SheptNativeModuleType>('SheptNative');

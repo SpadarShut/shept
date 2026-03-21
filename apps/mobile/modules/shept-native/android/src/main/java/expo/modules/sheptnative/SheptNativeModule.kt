@@ -110,6 +110,10 @@ class SheptNativeModule : Module() {
       return@Function OverlayService.currentStatus
     }
 
+    Function("getLastTranscription") {
+      return@Function OverlayService.lastTranscription
+    }
+
     Function("injectText") { text: String ->
       return@Function AccessibilityBridge.injectText(text)
     }

@@ -11,8 +11,11 @@ import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaRecorder
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -44,6 +47,9 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
 
     private var micButton: ImageView? = null
     private var loadingSpinner: ProgressBar? = null
+
+    private var autoHide = true
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     // Drag state
     private var initialX = 0
@@ -82,8 +88,12 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     override fun onFocusChanged(hasFocus: Boolean, packageName: String) {
         if (hasFocus) {
             Log.d(TAG, "Text field focused in: $packageName")
+            mainHandler.post { overlayView?.visibility = View.VISIBLE }
         } else {
             Log.d(TAG, "Text field focus lost")
+            if (autoHide && currentStatus == "idle") {
+                mainHandler.post { overlayView?.visibility = View.GONE }
+            }
         }
     }
 
@@ -169,6 +179,7 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     private fun onButtonTap() {
         when (currentStatus) {
             "idle" -> {
+                autoHide = false
                 startRecording()
             }
             "recording" -> {
@@ -180,6 +191,7 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                     Log.e(TAG, "No recording file available for STT")
                     applyIdleStyle()
                     currentStatus = "idle"
+                    autoHide = true
                     return
                 }
                 Thread {
@@ -194,11 +206,31 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                         lastTranscription = text
                         if (text.isNotEmpty()) {
                             val injected = AccessibilityBridge.injectText(text)
+                            if (!injected) {
+                                Log.w(TAG, "No focused input to inject text into")
+                            }
                             Log.d(TAG, "Text injection result: $injected")
+                        }
+                    } catch (e: SttException) {
+                        Log.e(TAG, "STT failed", e)
+                        val errorMsg = when {
+                            e.httpCode == 401 -> "Error: Invalid API key"
+                            e.httpCode == 429 -> "Error: Rate limit exceeded"
+                            e.message?.contains("No network") == true -> "Error: No network connection"
+                            else -> "Error: ${e.message}"
+                        }
+                        lastTranscription = errorMsg
+                        mainHandler.post {
+                            Toast.makeText(this@OverlayService, errorMsg, Toast.LENGTH_SHORT).show()
+                            flashError()
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "STT failed", e)
-                        lastTranscription = ""
+                        lastTranscription = "Error: ${e.message}"
+                        mainHandler.post {
+                            Toast.makeText(this@OverlayService, lastTranscription, Toast.LENGTH_SHORT).show()
+                            flashError()
+                        }
                     } finally {
                         try {
                             file.delete()
@@ -208,11 +240,26 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                         overlayView?.post {
                             applyIdleStyle()
                             currentStatus = "idle"
+                            autoHide = true
                         }
                     }
                 }.start()
             }
         }
+    }
+
+    private fun flashError() {
+        val root = overlayView?.findViewById<View>(R.id.overlay_root) ?: return
+        val errorBg = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.parseColor("#FF9800"))
+        }
+        root.background = errorBg
+        mainHandler.postDelayed({
+            if (currentStatus == "idle") {
+                applyIdleStyle()
+            }
+        }, 600)
     }
 
     private fun startRecording() {

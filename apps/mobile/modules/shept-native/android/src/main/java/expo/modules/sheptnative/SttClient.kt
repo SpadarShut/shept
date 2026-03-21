@@ -10,7 +10,11 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
+import java.net.UnknownHostException
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
+
+class SttException(message: String, val httpCode: Int = 0) : Exception(message)
 
 object SttClient {
 
@@ -86,12 +90,18 @@ object SttClient {
             .post(body)
             .build()
 
-        val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Empty response from ElevenLabs")
+        val response = try {
+            client.newCall(request).execute()
+        } catch (e: UnknownHostException) {
+            throw SttException("No network connection")
+        } catch (e: SocketTimeoutException) {
+            throw SttException("No network connection")
+        }
+        val responseBody = response.body?.string() ?: throw SttException("Empty response from ElevenLabs")
 
         if (!response.isSuccessful) {
             Log.e(TAG, "ElevenLabs error ${response.code}: $responseBody")
-            throw Exception("ElevenLabs STT failed with code ${response.code}")
+            throw SttException("ElevenLabs STT failed with code ${response.code}", response.code)
         }
 
         val json = JSONObject(responseBody)
@@ -123,12 +133,18 @@ object SttClient {
             .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
             .build()
 
-        val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Empty response from Google STT")
+        val response = try {
+            client.newCall(request).execute()
+        } catch (e: UnknownHostException) {
+            throw SttException("No network connection")
+        } catch (e: SocketTimeoutException) {
+            throw SttException("No network connection")
+        }
+        val responseBody = response.body?.string() ?: throw SttException("Empty response from Google STT")
 
         if (!response.isSuccessful) {
             Log.e(TAG, "Google STT error ${response.code}: $responseBody")
-            throw Exception("Google STT failed with code ${response.code}")
+            throw SttException("Google STT failed with code ${response.code}", response.code)
         }
 
         val json = JSONObject(responseBody)
