@@ -1,0 +1,21 @@
+{
+  "name": "@shept/eslint-config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "dependencies": {
+    "eslint-plugin-no-comments": "*",
+    "eslint-plugin-better-max-params": "*",
+    "eslint-plugin-sonarjs": "*",
+    "eslint-plugin-unicorn": "*",
+    "eslint-plugin-security": "*",
+    "eslint-plugin-react": "*",
+    "globals": "*"
+  }
+}
