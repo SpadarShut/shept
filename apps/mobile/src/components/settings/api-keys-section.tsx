@@ -1,4 +1,5 @@
 import { Text, TextInput, Linking } from "react-native"
+import { useTranslation } from "react-i18next"
 import { styles } from "./settings-styles"
 
 interface ApiKeysSectionProperties {
@@ -8,23 +9,23 @@ interface ApiKeysSectionProperties {
   onChangeGoogle: (value: string) => void
 }
 
-export function ApiKeysSection({
-  elevenLabsApiKey,
-  googleCloudApiKey,
-  onChangeElevenLabs,
-  onChangeGoogle,
-}: ApiKeysSectionProperties) {
+interface SingleKeyInputProperties {
+  value: string
+  onChange: (value: string) => void
+}
+
+function ElevenLabsKeyInput({ value, onChange }: SingleKeyInputProperties) {
+  const { t: tr } = useTranslation()
   return (
     <>
-      <Text style={styles.sectionTitle}>API Keys</Text>
-      <Text style={styles.fieldLabel}>ElevenLabs</Text>
+      <Text style={styles.fieldLabel}>{tr("settings.fieldElevenLabs")}</Text>
       <TextInput
         style={styles.apiInput}
         secureTextEntry
-        placeholder="Enter API key"
+        placeholder={tr("settings.enterApiKey")}
         placeholderTextColor="#999"
-        value={elevenLabsApiKey}
-        onChangeText={onChangeElevenLabs}
+        value={value}
+        onChangeText={onChange}
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -34,17 +35,26 @@ export function ApiKeysSection({
           Linking.openURL("https://elevenlabs.io/app/settings/api-keys")
         }
       >
-        Get your ElevenLabs API key
+        {tr("settings.getElevenLabsKey")}
       </Text>
+    </>
+  )
+}
 
-      <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Google Cloud</Text>
+function GoogleKeyInput({ value, onChange }: SingleKeyInputProperties) {
+  const { t: tr } = useTranslation()
+  return (
+    <>
+      <Text style={[styles.fieldLabel, { marginTop: 16 }]}>
+        {tr("settings.fieldGoogle")}
+      </Text>
       <TextInput
         style={styles.apiInput}
         secureTextEntry
-        placeholder="Enter API key"
+        placeholder={tr("settings.enterApiKey")}
         placeholderTextColor="#999"
-        value={googleCloudApiKey}
-        onChangeText={onChangeGoogle}
+        value={value}
+        onChangeText={onChange}
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -54,8 +64,27 @@ export function ApiKeysSection({
           Linking.openURL("https://console.cloud.google.com/apis/credentials")
         }
       >
-        Get your Google Cloud API key
+        {tr("settings.getGoogleKey")}
       </Text>
+    </>
+  )
+}
+
+export function ApiKeysSection({
+  elevenLabsApiKey,
+  googleCloudApiKey,
+  onChangeElevenLabs,
+  onChangeGoogle,
+}: ApiKeysSectionProperties) {
+  const { t: tr } = useTranslation()
+  return (
+    <>
+      <Text style={styles.sectionTitle}>{tr("settings.apiKeys")}</Text>
+      <ElevenLabsKeyInput
+        value={elevenLabsApiKey}
+        onChange={onChangeElevenLabs}
+      />
+      <GoogleKeyInput value={googleCloudApiKey} onChange={onChangeGoogle} />
     </>
   )
 }

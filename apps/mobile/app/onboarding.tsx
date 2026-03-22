@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, Text } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useTranslation } from "react-i18next"
 import { onboardingStyles as styles } from "../src/components/onboarding/onboarding-styles"
 import {
   TOTAL_STEPS,
@@ -56,11 +57,12 @@ function NavigationRow({
   onNext,
   onBack,
 }: NavigationRowProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   return (
     <View style={styles.navRow}>
       {step > 0 ? (
         <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <Text style={styles.backBtnText}>Back</Text>
+          <Text style={styles.backBtnText}>{tr("onboarding.back")}</Text>
         </TouchableOpacity>
       ) : (
         <View style={{ width: BACK_BUTTON_WIDTH }} />
@@ -70,7 +72,7 @@ function NavigationRow({
         onPress={onNext}
         disabled={!isNextEnabled}
       >
-        <Text style={styles.nextBtnText}>Next</Text>
+        <Text style={styles.nextBtnText}>{tr("onboarding.next")}</Text>
       </TouchableOpacity>
     </View>
   )

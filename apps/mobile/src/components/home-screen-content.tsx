@@ -7,13 +7,14 @@ import {
 } from "react-native"
 import { Animated } from "react-native"
 import { router } from "expo-router"
+import { useTranslation } from "react-i18next"
 
 import { homeScreenStyles as styles } from "../styles/home-screen-styles"
 import { ServiceStatusCard } from "./service-status-card"
 import { DemoInputSection } from "./demo-input-section"
 
 interface StatusDisplay {
-  label: string
+  labelKey: string
   color: string
 }
 
@@ -22,17 +23,17 @@ function getStatusDisplay(
   serviceStatus: string,
 ): StatusDisplay {
   if (!serviceRunning) {
-    return { label: "Not running", color: "#999" }
+    return { labelKey: "home.status.notRunning", color: "#999" }
   }
   switch (serviceStatus) {
     case "recording": {
-      return { label: "Recording...", color: "#D32F2F" }
+      return { labelKey: "home.status.recording", color: "#D32F2F" }
     }
     case "transcribing": {
-      return { label: "Transcribing...", color: "#FF9800" }
+      return { labelKey: "home.status.transcribing", color: "#FF9800" }
     }
     default: {
-      return { label: "Ready", color: "#4CAF50" }
+      return { labelKey: "home.status.ready", color: "#4CAF50" }
     }
   }
 }
@@ -46,16 +47,18 @@ interface HomeScreenContentProperties {
 }
 
 export function HomeScreenContent(properties: HomeScreenContentProperties) {
-  const { label: statusLabel, color: dotColor } = getStatusDisplay(
+  const { t: tr } = useTranslation()
+  const { labelKey, color: dotColor } = getStatusDisplay(
     properties.serviceRunning,
     properties.serviceStatus,
   )
+  const statusLabel = tr(labelKey)
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Shept</Text>
-        <Text style={styles.subtitle}>Voice to text, everywhere</Text>
+        <Text style={styles.title}>{tr("home.title")}</Text>
+        <Text style={styles.subtitle}>{tr("home.subtitle")}</Text>
         <ServiceStatusCard
           statusLabel={statusLabel}
           dotColor={dotColor}
@@ -73,7 +76,9 @@ export function HomeScreenContent(properties: HomeScreenContentProperties) {
             onPress={properties.handleToggleService}
           >
             <Text style={styles.serviceButtonText}>
-              {properties.serviceRunning ? "Stop Service" : "Start Service"}
+              {properties.serviceRunning
+                ? tr("home.stopService")
+                : tr("home.startService")}
             </Text>
           </TouchableOpacity>
         )}
@@ -81,7 +86,7 @@ export function HomeScreenContent(properties: HomeScreenContentProperties) {
           style={styles.settingsButton}
           onPress={() => router.push("/settings")}
         >
-          <Text style={styles.settingsButtonText}>Settings</Text>
+          <Text style={styles.settingsButtonText}>{tr("home.settings")}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
