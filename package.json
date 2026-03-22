@@ -6,6 +6,11 @@
     "android": "pnpm --filter mobile android",
     "test": "pnpm --filter mobile test",
     "lint": "pnpm -r lint",
-    "lint:fix": "pnpm -r lint:fix"
+    "lint:fix": "pnpm -r lint:fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1"
   }
 }
