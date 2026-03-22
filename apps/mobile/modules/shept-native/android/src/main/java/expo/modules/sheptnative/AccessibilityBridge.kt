@@ -58,34 +58,48 @@ object AccessibilityBridge {
             return false
         }
 
-        // Try ACTION_SET_TEXT first
+        // Primary: ACTION_PASTE inserts at cursor naturally
+        val pasteResult = try {
+            val ctx = clipboardContext
+            if (ctx != null) {
+                val clipboard = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val oldClip = clipboard.primaryClip
+                clipboard.setPrimaryClip(ClipData.newPlainText("shept", text))
+                val pasted = node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                if (oldClip != null) clipboard.setPrimaryClip(oldClip)
+                else clipboard.clearPrimaryClip()
+                if (pasted) Log.d(TAG, "Injected text via ACTION_PASTE")
+                pasted
+            } else false
+        } catch (e: Exception) {
+            Log.e(TAG, "Paste failed", e)
+            false
+        }
+
+        if (pasteResult) return true
+
+        // Fallback: ACTION_SET_TEXT with manual cursor-position merge
+        val existing = node.text?.toString() ?: ""
+        val selStart = node.textSelectionStart.coerceIn(0, existing.length)
+        val selEnd = node.textSelectionEnd.coerceIn(selStart, existing.length)
+        val merged = existing.substring(0, selStart) + text + existing.substring(selEnd)
+
         val args = Bundle().apply {
-            putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+            putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, merged)
         }
         if (node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)) {
-            Log.d(TAG, "Injected text via ACTION_SET_TEXT")
+            Log.d(TAG, "Injected text via ACTION_SET_TEXT (merged)")
+            val newCursorPos = selStart + text.length
+            val selArgs = Bundle().apply {
+                putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, newCursorPos)
+                putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, newCursorPos)
+            }
+            node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selArgs)
             return true
         }
 
-        // Fallback: ACTION_PASTE via clipboard
-        return try {
-            val ctx = clipboardContext ?: run {
-                Log.e(TAG, "No context for clipboard fallback")
-                return false
-            }
-            val clipboard = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("shept", text))
-            if (node.performAction(AccessibilityNodeInfo.ACTION_PASTE)) {
-                Log.d(TAG, "Injected text via ACTION_PASTE")
-                true
-            } else {
-                Log.w(TAG, "Both ACTION_SET_TEXT and ACTION_PASTE failed")
-                false
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Paste fallback failed", e)
-            false
-        }
+        Log.w(TAG, "Both ACTION_PASTE and ACTION_SET_TEXT failed")
+        return false
     }
 
     @Volatile
