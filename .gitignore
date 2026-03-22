@@ -4,6 +4,7 @@ node_modules/
 android/
 ios/
 refs/
+.claude/worktrees
 
 # But track native module source files
 !apps/mobile/modules/*/android/
