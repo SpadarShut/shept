@@ -46,7 +46,6 @@ export default function SettingsScreen() {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
       >
         {/* Provider */}
         <Text style={styles.sectionTitle}>Provider</Text>
@@ -138,22 +137,6 @@ export default function SettingsScreen() {
           value={langSearch}
           onChangeText={setLangSearch}
         />
-        {languages.length > 0 && (
-          <View style={styles.chipsRow}>
-            {languages.map((code) => {
-              const lang = LANGUAGES.find((l) => l.code === code);
-              return (
-                <TouchableOpacity
-                  key={code}
-                  style={styles.chip}
-                  onPress={() => toggleLang(code)}
-                >
-                  <Text style={styles.chipText}>{lang?.name ?? code} x</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
         {filteredLangs.map((item) => {
           const selected = languages.includes(item.code);
           return (

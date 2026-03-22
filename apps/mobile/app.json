@@ -23,7 +23,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.shept"
+      "package": "com.spadarshut.shept"
     },
     "web": {
       "favicon": "./assets/favicon.png"

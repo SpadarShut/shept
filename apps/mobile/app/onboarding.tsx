@@ -187,6 +187,7 @@ export default function OnboardingScreen() {
       elevenLabsApiKey: elevenLabsKey,
       googleCloudApiKey: googleKey,
       onboardingComplete: true,
+      autoStart: true,
     });
     router.replace("/");
   };

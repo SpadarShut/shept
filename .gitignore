@@ -3,6 +3,7 @@ node_modules/
 .expo/
 android/
 ios/
+refs/
 
 # But track native module source files
 !apps/mobile/modules/*/android/

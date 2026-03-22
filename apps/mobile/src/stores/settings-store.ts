@@ -28,7 +28,7 @@ const defaults: SheptSettings = {
   googleCloudApiKey: "",
   languages: [],
   primaryLanguage: "",
-  autoStart: false,
+  autoStart: true,
   onboardingComplete: false,
 };
 

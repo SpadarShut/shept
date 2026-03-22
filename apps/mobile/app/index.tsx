@@ -8,6 +8,9 @@ import {
   AppState,
   Platform,
   Animated,
+  TextInput,
+  KeyboardAvoidingView,
+  ScrollView,
 } from "react-native";
 import { router } from "expo-router";
 import { useSettingsStore } from "../src/stores/settings-store";
@@ -16,6 +19,7 @@ import SheptNative from "../modules/shept-native/src/SheptNativeModule";
 export default function HomeScreen() {
   const hydrated = useSettingsStore((s) => s.hydrated);
   const onboardingComplete = useSettingsStore((s) => s.onboardingComplete);
+  const autoStart = useSettingsStore((s) => s.autoStart);
   const hydrate = useSettingsStore((s) => s.hydrate);
 
   const [serviceStatus, setServiceStatus] = useState("idle");
@@ -24,6 +28,7 @@ export default function HomeScreen() {
   const serviceStartedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const inputRef = useRef<TextInput>(null);
 
   const pollStatus = useCallback(() => {
     if (Platform.OS !== "android") {
@@ -54,6 +59,17 @@ export default function HomeScreen() {
       router.replace("/onboarding");
     }
   }, [hydrated, onboardingComplete]);
+
+  useEffect(() => {
+    if (hydrated && onboardingComplete && autoStart && Platform.OS === "android") {
+      if (SheptNative.isOverlayPermissionGranted()) {
+        SheptNative.startOverlay();
+        setServiceRunning(true);
+        serviceStartedRef.current = true;
+        setTimeout(pollStatus, 500);
+      }
+    }
+  }, [hydrated, onboardingComplete, autoStart]);
 
   // Pulse animation for recording dot
   useEffect(() => {
@@ -145,53 +161,80 @@ export default function HomeScreen() {
   const { label: statusLabel, color: dotColor } = getStatusDisplay();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Shept</Text>
-      <Text style={styles.subtitle}>Voice to text, everywhere</Text>
-      <View style={styles.statusBox}>
-        <Text style={styles.statusLabel}>Service Status</Text>
-        <View style={styles.statusRow}>
-          <Animated.View
-            style={[
-              styles.statusDot,
-              { backgroundColor: dotColor },
-              serviceStatus === "recording" && { opacity: pulseAnim },
-            ]}
-          />
-          <Text style={styles.statusValue}>{statusLabel}</Text>
-        </View>
-        {lastTranscription !== "" && (
-          <Text style={styles.transcriptionText} numberOfLines={3}>
-            {lastTranscription}
-          </Text>
-        )}
-      </View>
-      {Platform.OS === "android" && (
-        <TouchableOpacity
-          style={[styles.serviceBtn, serviceRunning && styles.serviceBtnStop]}
-          onPress={handleToggleService}
-        >
-          <Text style={styles.serviceBtnText}>
-            {serviceRunning ? "Stop Service" : "Start Service"}
-          </Text>
-        </TouchableOpacity>
-      )}
-      <TouchableOpacity
-        style={styles.settingsBtn}
-        onPress={() => router.push("/settings")}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior="padding"
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.settingsBtnText}>Settings</Text>
-      </TouchableOpacity>
-    </View>
+        <Text style={styles.title}>Shept</Text>
+        <Text style={styles.subtitle}>Voice to text, everywhere</Text>
+        <View style={styles.statusBox}>
+          <Text style={styles.statusLabel}>Service Status</Text>
+          <View style={styles.statusRow}>
+            <Animated.View
+              style={[
+                styles.statusDot,
+                { backgroundColor: dotColor },
+                serviceStatus === "recording" && { opacity: pulseAnim },
+              ]}
+            />
+            <Text style={styles.statusValue}>{statusLabel}</Text>
+          </View>
+          {lastTranscription !== "" && (
+            <Text style={styles.transcriptionText} numberOfLines={3}>
+              {lastTranscription}
+            </Text>
+          )}
+        </View>
+        <View style={styles.demoSection}>
+          <Text style={styles.demoLabel}>See in action</Text>
+          <TextInput
+            ref={inputRef}
+            style={styles.demoInput}
+            placeholder="Focus here, then tap the overlay…"
+            placeholderTextColor="#aaa"
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+          <TouchableOpacity style={styles.clearBtn} onPress={() => inputRef.current?.clear()}>
+            <Text style={styles.clearBtnText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
+        {Platform.OS === "android" && (
+          <TouchableOpacity
+            style={[styles.serviceBtn, serviceRunning && styles.serviceBtnStop]}
+            onPress={handleToggleService}
+          >
+            <Text style={styles.serviceBtnText}>
+              {serviceRunning ? "Stop Service" : "Start Service"}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={styles.settingsBtn}
+          onPress={() => router.push("/settings")}
+        >
+          <Text style={styles.settingsBtnText}>Settings</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "#fff",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    paddingVertical: 40,
+    paddingBottom: 80,
   },
   title: {
     fontSize: 32,
@@ -262,5 +305,41 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  demoSection: {
+    marginTop: 32,
+    width: "80%",
+  },
+  demoLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 8,
+    textAlign: "center",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  demoInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    backgroundColor: "#fafafa",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#333",
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  clearBtn: {
+    marginTop: 8,
+    alignSelf: "flex-end",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: "#eee",
+  },
+  clearBtnText: {
+    fontSize: 13,
+    color: "#666",
   },
 });
