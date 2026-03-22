@@ -1,4 +1,4 @@
-import { core, recommended, react } from "@shept/eslint-config";
+import { core, recommended, react } from "@shept/eslint-config"
 
 export default [
   ...core,
@@ -14,4 +14,4 @@ export default [
       "modules/shept-native/ios/**",
     ],
   },
-];
+]
