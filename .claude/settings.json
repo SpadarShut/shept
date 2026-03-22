@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hook": "FILEPATH=\"$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path // .filePath // \"\"')\"; FILENAME=\"$(basename \"$FILEPATH\")\"; if [ \"$FILENAME\" = \"eslint.config.mjs\" ]; then echo '{\"decision\":\"block\",\"reason\":\"Modifying eslint.config.mjs is forbidden. If a rule makes your task impossible, report to the user and explain why.\"}'; else echo '{\"decision\":\"approve\"}'; fi"
+      }
+    ]
+  }
+}
