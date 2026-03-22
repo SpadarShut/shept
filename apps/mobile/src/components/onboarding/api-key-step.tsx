@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
+import { useTranslation } from "react-i18next"
 import { onboardingStyles as styles } from "./onboarding-styles"
 import { API_KEY_SECTION_MARGIN_TOP } from "./onboarding-constants"
 
@@ -29,6 +30,7 @@ export function ApiKeyStep({
   googleKey,
   setGoogleKey,
 }: ApiKeyStepProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -39,8 +41,10 @@ export function ApiKeyStep({
         contentContainerStyle={styles.stepContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.stepTitle}>API Key Setup</Text>
-        <Text style={styles.providerLabel}>Provider</Text>
+        <Text style={styles.stepTitle}>{tr("onboarding.apiKey.title")}</Text>
+        <Text style={styles.providerLabel}>
+          {tr("onboarding.apiKey.provider")}
+        </Text>
         <ProviderToggle provider={provider} setProvider={setProvider} />
         <ElevenLabsKeyInput value={elevenLabsKey} onChange={setElevenLabsKey} />
         <GoogleKeyInput value={googleKey} onChange={setGoogleKey} />
@@ -58,6 +62,7 @@ function ProviderToggle({
   provider,
   setProvider,
 }: ProviderToggleProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   return (
     <View style={styles.providerRow}>
       <TouchableOpacity
@@ -73,7 +78,7 @@ function ProviderToggle({
             provider === "elevenlabs" && styles.providerBtnTextActive,
           ]}
         >
-          ElevenLabs
+          {tr("settings.fieldElevenLabs")}
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -89,7 +94,7 @@ function ProviderToggle({
             provider === "google" && styles.providerBtnTextActive,
           ]}
         >
-          Google Cloud
+          {tr("settings.fieldGoogle")}
         </Text>
       </TouchableOpacity>
     </View>
@@ -105,17 +110,20 @@ function ElevenLabsKeyInput({
   value,
   onChange,
 }: KeyInputProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   const handleOpenLink = useCallback(() => {
     Linking.openURL("https://elevenlabs.io/app/settings/api-keys")
   }, [])
 
   return (
     <>
-      <Text style={styles.fieldLabel}>ElevenLabs API Key</Text>
+      <Text style={styles.fieldLabel}>
+        {tr("onboarding.apiKey.elevenLabsLabel")}
+      </Text>
       <TextInput
         style={styles.apiInput}
         secureTextEntry
-        placeholder="Enter ElevenLabs API key"
+        placeholder={tr("onboarding.apiKey.elevenLabsPlaceholder")}
         placeholderTextColor="#999"
         value={value}
         onChangeText={onChange}
@@ -123,7 +131,7 @@ function ElevenLabsKeyInput({
         autoCorrect={false}
       />
       <Text style={styles.linkText} onPress={handleOpenLink}>
-        Get your ElevenLabs API key at elevenlabs.io/app/settings/api-keys
+        {tr("onboarding.apiKey.elevenLabsLink")}
       </Text>
     </>
   )
@@ -133,6 +141,7 @@ function GoogleKeyInput({
   value,
   onChange,
 }: KeyInputProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   const handleOpenLink = useCallback(() => {
     Linking.openURL("https://console.cloud.google.com/apis/credentials")
   }, [])
@@ -142,12 +151,12 @@ function GoogleKeyInput({
       <Text
         style={[styles.fieldLabel, { marginTop: API_KEY_SECTION_MARGIN_TOP }]}
       >
-        Google Cloud API Key
+        {tr("onboarding.apiKey.googleLabel")}
       </Text>
       <TextInput
         style={styles.apiInput}
         secureTextEntry
-        placeholder="Enter Google Cloud API key"
+        placeholder={tr("onboarding.apiKey.googlePlaceholder")}
         placeholderTextColor="#999"
         value={value}
         onChangeText={onChange}
@@ -155,8 +164,7 @@ function GoogleKeyInput({
         autoCorrect={false}
       />
       <Text style={styles.linkText} onPress={handleOpenLink}>
-        Get your Google Cloud API key at
-        console.cloud.google.com/apis/credentials
+        {tr("onboarding.apiKey.googleLink")}
       </Text>
     </>
   )

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import type { OnboardingPermissions } from "./use-onboarding-permissions"
 import {
   STEP_LANGUAGES,
@@ -31,17 +32,26 @@ export interface OnboardingStepContentProperties {
   onFinish: () => void
 }
 
-function renderPermissionStep(
-  step: number,
-  permissions: OnboardingPermissions,
-): React.JSX.Element | undefined {
+type Translate = (key: string) => string
+
+interface PermissionStepArguments {
+  step: number
+  permissions: OnboardingPermissions
+  translate: Translate
+}
+
+function renderPermissionStep({
+  step,
+  permissions,
+  translate,
+}: PermissionStepArguments): React.JSX.Element | undefined {
   switch (step) {
     case STEP_NOTIFICATIONS: {
       return (
         <PermissionStep
-          title="Notification Permission"
-          description="Required to keep the voice service running."
-          buttonLabel="Allow Notifications"
+          title={translate("onboarding.notifications.title")}
+          description={translate("onboarding.notifications.desc")}
+          buttonLabel={translate("onboarding.notifications.button")}
           granted={permissions.notificationGranted}
           onPress={permissions.requestNotification}
         />
@@ -50,9 +60,9 @@ function renderPermissionStep(
     case STEP_OVERLAY: {
       return (
         <PermissionStep
-          title="Overlay Permission"
-          description="Allows the mic button to float over other apps."
-          buttonLabel="Allow Overlay"
+          title={translate("onboarding.overlay.title")}
+          description={translate("onboarding.overlay.desc")}
+          buttonLabel={translate("onboarding.overlay.button")}
           granted={permissions.overlayGranted}
           onPress={permissions.requestOverlay}
         />
@@ -61,9 +71,9 @@ function renderPermissionStep(
     case STEP_MICROPHONE: {
       return (
         <PermissionStep
-          title="Microphone Permission"
-          description="Required to capture your voice for transcription."
-          buttonLabel="Allow Microphone"
+          title={translate("onboarding.microphone.title")}
+          description={translate("onboarding.microphone.desc")}
+          buttonLabel={translate("onboarding.microphone.button")}
           granted={permissions.microphoneGranted}
           onPress={permissions.requestMicrophone}
         />
@@ -78,10 +88,13 @@ function renderPermissionStep(
 export function OnboardingStepContent(
   properties: OnboardingStepContentProperties,
 ): React.JSX.Element | undefined {
-  const permissionStep = renderPermissionStep(
-    properties.step,
-    properties.permissions,
-  )
+  const { t: tr } = useTranslation()
+
+  const permissionStep = renderPermissionStep({
+    step: properties.step,
+    permissions: properties.permissions,
+    translate: tr,
+  })
   if (permissionStep) {
     return permissionStep
   }

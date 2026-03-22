@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { View, Text, TouchableOpacity, TextInput, FlatList } from "react-native"
+import { useTranslation } from "react-i18next"
 import { LANGUAGES } from "../../constants/languages"
 import { onboardingStyles as styles } from "./onboarding-styles"
 
@@ -18,12 +19,13 @@ export function PermissionStep({
   granted,
   onPress,
 }: PermissionStepProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   return (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>{title}</Text>
       <Text style={styles.stepDesc}>{description}</Text>
       {granted ? (
-        <Text style={styles.grantedText}>Granted</Text>
+        <Text style={styles.grantedText}>{tr("onboarding.granted")}</Text>
       ) : (
         <TouchableOpacity style={styles.permBtn} onPress={onPress}>
           <Text style={styles.permBtnText}>{buttonLabel}</Text>
@@ -34,13 +36,12 @@ export function PermissionStep({
 }
 
 export function WelcomeStep(): React.JSX.Element {
+  const { t: tr } = useTranslation()
   return (
     <View style={styles.stepContent}>
       <Text style={styles.logo}>Shept</Text>
-      <Text style={styles.stepTitle}>Voice to text, everywhere</Text>
-      <Text style={styles.stepDesc}>
-        Shept transcribes your speech and injects it into any text field.
-      </Text>
+      <Text style={styles.stepTitle}>{tr("onboarding.welcome.title")}</Text>
+      <Text style={styles.stepDesc}>{tr("onboarding.welcome.desc")}</Text>
     </View>
   )
 }
@@ -54,6 +55,7 @@ export function LanguageStep({
   selectedLanguages,
   toggleLanguage,
 }: LanguageStepProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   const [languageSearch, setLanguageSearch] = useState("")
 
   const filteredLanguages = LANGUAGES.filter((language) =>
@@ -62,10 +64,10 @@ export function LanguageStep({
 
   return (
     <View style={[styles.stepContent, styles.flex1]}>
-      <Text style={styles.stepTitle}>Select Languages</Text>
+      <Text style={styles.stepTitle}>{tr("onboarding.selectLanguages")}</Text>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search languages..."
+        placeholder={tr("onboarding.searchLanguages")}
         placeholderTextColor="#999"
         value={languageSearch}
         onChangeText={setLanguageSearch}
@@ -137,21 +139,24 @@ export function AccessibilityStep({
   accessibilityGranted,
   openAccessibility,
 }: AccessibilityStepProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   return (
     <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Accessibility Service</Text>
-      <Text style={styles.stepDesc}>
-        Detects text fields and injects transcribed text.
+      <Text style={styles.stepTitle}>
+        {tr("onboarding.accessibility.title")}
       </Text>
+      <Text style={styles.stepDesc}>{tr("onboarding.accessibility.desc")}</Text>
       {accessibilityGranted ? (
-        <Text style={styles.grantedText}>Enabled</Text>
+        <Text style={styles.grantedText}>{tr("onboarding.enabled")}</Text>
       ) : (
         <>
           <Text style={styles.stepHint}>
-            Scroll to find Shept and enable it.
+            {tr("onboarding.accessibility.hint")}
           </Text>
           <TouchableOpacity style={styles.permBtn} onPress={openAccessibility}>
-            <Text style={styles.permBtnText}>Open Accessibility Settings</Text>
+            <Text style={styles.permBtnText}>
+              {tr("onboarding.accessibility.button")}
+            </Text>
           </TouchableOpacity>
         </>
       )}
@@ -166,15 +171,16 @@ interface FinishStepProperties {
 export function FinishStep({
   onFinish,
 }: FinishStepProperties): React.JSX.Element {
+  const { t: tr } = useTranslation()
   return (
     <View style={styles.stepContent}>
       <Text style={styles.logo}>Shept</Text>
-      <Text style={styles.stepTitle}>You&apos;re all set!</Text>
-      <Text style={styles.stepDesc}>
-        Shept is ready to transcribe your voice.
-      </Text>
+      <Text style={styles.stepTitle}>{tr("onboarding.finish.title")}</Text>
+      <Text style={styles.stepDesc}>{tr("onboarding.finish.desc")}</Text>
       <TouchableOpacity style={styles.startBtn} onPress={onFinish}>
-        <Text style={styles.startBtnText}>Start Shept</Text>
+        <Text style={styles.startBtnText}>
+          {tr("onboarding.finish.button")}
+        </Text>
       </TouchableOpacity>
     </View>
   )

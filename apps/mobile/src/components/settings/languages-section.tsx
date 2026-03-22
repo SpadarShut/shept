@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Text, TextInput, TouchableOpacity } from "react-native"
+import { useTranslation } from "react-i18next"
 import { LANGUAGES } from "../../constants/languages"
 import { styles } from "./settings-styles"
 
@@ -12,6 +13,7 @@ export function LanguagesSection({
   languages,
   onToggle,
 }: LanguagesSectionProperties) {
+  const { t: tr } = useTranslation()
   const [langSearch, setLangSearch] = useState("")
 
   const filteredLangs = LANGUAGES.filter((language) =>
@@ -20,10 +22,12 @@ export function LanguagesSection({
 
   return (
     <>
-      <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Languages</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 32 }]}>
+        {tr("settings.languages")}
+      </Text>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search languages..."
+        placeholder={tr("settings.searchLanguages")}
         placeholderTextColor="#999"
         value={langSearch}
         onChangeText={setLangSearch}

@@ -4,6 +4,7 @@ import { ProviderSection } from "../src/components/settings/provider-section"
 import { ApiKeysSection } from "../src/components/settings/api-keys-section"
 import { LanguagesSection } from "../src/components/settings/languages-section"
 import { AutoStartSection } from "../src/components/settings/auto-start-section"
+import { AppLanguageSection } from "../src/components/settings/app-language-section"
 import { styles } from "../src/components/settings/settings-styles"
 
 function resolvePrimaryLanguage(next: string[], current: string): string {
@@ -19,6 +20,7 @@ export default function SettingsScreen() {
   const languages = useSettingsStore((state) => state.languages)
   const primaryLanguage = useSettingsStore((state) => state.primaryLanguage)
   const autoStart = useSettingsStore((state) => state.autoStart)
+  const appLanguage = useSettingsStore((state) => state.appLanguage)
   const set = useSettingsStore((state) => state.set)
   const setMany = useSettingsStore((state) => state.setMany)
 
@@ -53,6 +55,10 @@ export default function SettingsScreen() {
         <AutoStartSection
           autoStart={autoStart}
           onChange={(value) => set("autoStart", value)}
+        />
+        <AppLanguageSection
+          appLanguage={appLanguage}
+          onChange={(value) => set("appLanguage", value)}
         />
       </ScrollView>
     </KeyboardAvoidingView>

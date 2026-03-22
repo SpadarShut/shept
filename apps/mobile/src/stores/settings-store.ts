@@ -13,6 +13,7 @@ export interface SheptSettings {
   primaryLanguage: string
   autoStart: boolean
   onboardingComplete: boolean
+  appLanguage: "system" | "en" | "be"
 }
 
 interface SettingsStore extends SheptSettings {
@@ -30,6 +31,7 @@ const defaults: SheptSettings = {
   primaryLanguage: "",
   autoStart: true,
   onboardingComplete: false,
+  appLanguage: "system",
 }
 
 function persist(state: SheptSettings) {
@@ -41,6 +43,7 @@ function persist(state: SheptSettings) {
     primaryLanguage: state.primaryLanguage,
     autoStart: state.autoStart,
     onboardingComplete: state.onboardingComplete,
+    appLanguage: state.appLanguage,
   }
   const json = JSON.stringify(data)
   SecureStore.setItemAsync(STORE_KEY, json).catch(() => {})

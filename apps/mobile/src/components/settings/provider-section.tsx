@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native"
+import { useTranslation } from "react-i18next"
 import type { SheptSettings } from "../../stores/settings-store"
 import { styles } from "./settings-styles"
 
@@ -11,9 +12,10 @@ export function ProviderSection({
   sttProvider,
   onSelect,
 }: ProviderSectionProperties) {
+  const { t: tr } = useTranslation()
   return (
     <>
-      <Text style={styles.sectionTitle}>Provider</Text>
+      <Text style={styles.sectionTitle}>{tr("settings.provider")}</Text>
       <View style={styles.providerRow}>
         <TouchableOpacity
           style={[
@@ -28,7 +30,7 @@ export function ProviderSection({
               sttProvider === "elevenlabs" && styles.providerBtnTextActive,
             ]}
           >
-            ElevenLabs
+            {tr("settings.fieldElevenLabs")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -44,7 +46,7 @@ export function ProviderSection({
               sttProvider === "google" && styles.providerBtnTextActive,
             ]}
           >
-            Google Cloud
+            {tr("settings.fieldGoogle")}
           </Text>
         </TouchableOpacity>
       </View>
