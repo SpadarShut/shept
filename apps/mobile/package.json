@@ -9,7 +9,9 @@
     "web": "expo start --web",
     "test": "pnpm test:js && pnpm test:android",
     "test:js": "jest --passWithNoTests",
-    "test:android": "cd android && ./gradlew :shept-native:test --quiet"
+    "test:android": "cd android && ./gradlew :shept-native:test --quiet",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "jest": {
     "preset": "jest-expo"
@@ -29,7 +31,9 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@shept/eslint-config": "workspace:*",
     "@types/react": "~19.2.2",
+    "eslint": "^9.28.0",
     "jest": "^30.3.0",
     "jest-expo": "^55.0.11",
     "typescript": "~5.9.2"

@@ -1,6 +1,6 @@
 export interface Language {
-  code: string;
-  name: string;
+  code: string
+  name: string
 }
 
 export const LANGUAGES: Language[] = [
@@ -24,4 +24,4 @@ export const LANGUAGES: Language[] = [
   { code: "hi", name: "Hindi" },
   { code: "tr", name: "Turkish" },
   { code: "it", name: "Italian" },
-];
+]

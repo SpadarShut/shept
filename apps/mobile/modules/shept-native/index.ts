@@ -1,1 +1,1 @@
-export { default } from './src/SheptNativeModule';
+export { default } from "./src/shept-native-module"

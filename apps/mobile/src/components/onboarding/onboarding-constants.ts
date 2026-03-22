@@ -1,0 +1,12 @@
+export const TOTAL_STEPS = 8
+export const STEP_WELCOME = 0
+export const STEP_LANGUAGES = 1
+export const STEP_NOTIFICATIONS = 2
+export const STEP_OVERLAY = 3
+export const STEP_ACCESSIBILITY = 4
+export const STEP_MICROPHONE = 5
+export const STEP_API_KEYS = 6
+export const STEP_FINISH = 7
+export const ANDROID_NOTIFICATION_VERSION = 33
+export const BACK_BUTTON_WIDTH = 80
+export const API_KEY_SECTION_MARGIN_TOP = 24
