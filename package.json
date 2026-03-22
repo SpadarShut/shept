@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter mobile start",
-    "android": "pnpm --filter mobile android"
+    "android": "pnpm --filter mobile android",
+    "test": "pnpm --filter mobile test"
   }
 }

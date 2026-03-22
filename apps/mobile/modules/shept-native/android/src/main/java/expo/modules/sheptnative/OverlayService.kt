@@ -1,5 +1,8 @@
 package expo.modules.sheptnative
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -15,14 +18,15 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
-import android.widget.Toast
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import java.io.File
 
@@ -62,6 +66,9 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     private var initialTouchY = 0f
     private var isDragging = false
     private var isOverDismissZone = false
+    private var edgeSnapAnimator: ValueAnimator? = null
+    private var fadeAnimator: ValueAnimator? = null
+    private var overlayParams: WindowManager.LayoutParams? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -87,6 +94,8 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
         super.onDestroy()
         AccessibilityBridge.removeObserver(this)
         snoozeRunnable?.let { mainHandler.removeCallbacks(it) }
+        fadeAnimator?.cancel()
+        edgeSnapAnimator?.cancel()
         if (currentStatus == "recording") {
             stopRecording()
         }
@@ -99,13 +108,39 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
         if (hasFocus) {
             Log.d(TAG, "Text field focused in: $packageName")
             if (!snoozed) {
-                mainHandler.post { overlayView?.visibility = View.VISIBLE }
+                mainHandler.post { showOverlay() }
             }
         } else {
             Log.d(TAG, "Text field focus lost")
             if (currentStatus == "idle") {
-                mainHandler.post { overlayView?.visibility = View.GONE }
+                mainHandler.post { hideOverlay() }
             }
+        }
+    }
+
+    private fun showOverlay() {
+        val view = overlayView ?: return
+        fadeAnimator?.cancel()
+        view.visibility = View.VISIBLE
+        fadeAnimator = ValueAnimator.ofFloat(view.alpha, 1f).apply {
+            duration = 150
+            addUpdateListener { view.alpha = it.animatedValue as Float }
+            start()
+        }
+    }
+
+    private fun hideOverlay() {
+        val view = overlayView ?: return
+        fadeAnimator?.cancel()
+        fadeAnimator = ValueAnimator.ofFloat(view.alpha, 0f).apply {
+            duration = 150
+            addUpdateListener { view.alpha = it.animatedValue as Float }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    if (view.alpha == 0f) view.visibility = View.GONE
+                }
+            })
+            start()
         }
     }
 
@@ -151,22 +186,33 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
             x = 100
             y = 300
         }
+        overlayParams = params
 
         applyIdleStyle()
         overlayView?.visibility = View.GONE
 
+        val bubbleSizePx = (56 * resources.displayMetrics.density).toInt()
+
         overlayView?.setOnTouchListener { view, event ->
+            val screenWidth = resources.displayMetrics.widthPixels
             val screenHeight = resources.displayMetrics.heightPixels
-            val dismissThreshold = screenHeight - 200 // bottom 200px is dismiss zone
+            val dismissThreshold = screenHeight - 200
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    // Cancel any running edge-snap
+                    edgeSnapAnimator?.cancel()
+                    edgeSnapAnimator = null
+
                     initialX = params.x
                     initialY = params.y
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
                     isDragging = false
                     isOverDismissZone = false
+
+                    // Lift: raise elevation
+                    overlayView?.elevation = 12f * resources.displayMetrics.density
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -182,13 +228,12 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                     params.y = initialY + dy
                     windowManager?.updateViewLayout(overlayView, params)
 
-                    // Check if over dismiss zone
+                    // Check dismiss zone
                     val nowOverDismiss = event.rawY > dismissThreshold
                     if (nowOverDismiss != isOverDismissZone) {
                         isOverDismissZone = nowOverDismiss
                         updateDismissZoneHighlight(isOverDismissZone)
                         if (isOverDismissZone) {
-                            // Scale down the bubble to indicate it will be dismissed
                             overlayView?.scaleX = 0.7f
                             overlayView?.scaleY = 0.7f
                         } else {
@@ -202,11 +247,15 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                     hideDismissZone()
                     overlayView?.scaleX = 1f
                     overlayView?.scaleY = 1f
+                    overlayView?.elevation = 6f * resources.displayMetrics.density
 
                     if (isOverDismissZone && isDragging) {
                         snoozeOverlay()
                     } else if (!isDragging) {
                         onButtonTap()
+                    } else {
+                        // Edge-snap with spring overshoot
+                        snapToEdge(params, screenWidth, bubbleSizePx)
                     }
                     true
                 }
@@ -214,13 +263,34 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
             }
         }
 
+        // Set resting elevation
+        overlayView?.elevation = 6f * resources.displayMetrics.density
         windowManager?.addView(overlayView, params)
+    }
+
+    private fun snapToEdge(params: WindowManager.LayoutParams, screenWidth: Int, bubbleSize: Int) {
+        val currentX = params.x
+        val centerX = currentX + bubbleSize / 2
+        val margin = (8 * resources.displayMetrics.density).toInt()
+        val targetX = if (centerX < screenWidth / 2) margin else screenWidth - bubbleSize - margin
+
+        edgeSnapAnimator?.cancel()
+        edgeSnapAnimator = ValueAnimator.ofInt(currentX, targetX).apply {
+            duration = 400
+            interpolator = OvershootInterpolator(1.2f)
+            addUpdateListener { anim ->
+                params.x = anim.animatedValue as Int
+                try {
+                    windowManager?.updateViewLayout(overlayView, params)
+                } catch (_: Exception) {}
+            }
+            start()
+        }
     }
 
     private fun onButtonTap() {
         when (currentStatus) {
             "idle" -> {
-
                 startRecording()
             }
             "recording" -> {
@@ -232,7 +302,6 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                     Log.e(TAG, "No recording file available for STT")
                     applyIdleStyle()
                     currentStatus = "idle"
-
                     return
                 }
                 Thread {
@@ -283,7 +352,6 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                         overlayView?.post {
                             applyIdleStyle()
                             currentStatus = "idle"
-        
                         }
                     }
                 }.start()
@@ -444,13 +512,13 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     private fun snoozeOverlay() {
         Log.d(TAG, "Overlay snoozed for 10 minutes")
         snoozed = true
-        overlayView?.visibility = View.GONE
+        hideOverlay()
 
         snoozeRunnable?.let { mainHandler.removeCallbacks(it) }
         snoozeRunnable = Runnable {
             Log.d(TAG, "Snooze ended, overlay visible again")
             snoozed = false
-            overlayView?.visibility = View.VISIBLE
+            showOverlay()
         }
         mainHandler.postDelayed(snoozeRunnable!!, SNOOZE_DURATION_MS)
     }
