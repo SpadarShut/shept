@@ -12,6 +12,8 @@ import { useTranslation } from "react-i18next"
 import { homeScreenStyles as styles } from "../styles/home-screen-styles"
 import { ServiceStatusCard } from "./service-status-card"
 import { DemoInputSection } from "./demo-input-section"
+import { IssueCardList } from "./issue-card-list"
+import type { PrerequisiteStatus } from "../hooks/use-prerequisites"
 
 interface StatusDisplay {
   labelKey: string
@@ -44,43 +46,64 @@ interface HomeScreenContentProperties {
   serviceRunning: boolean
   pulseAnimation: Animated.Value
   handleToggleService: () => void
+  prereqStatus: PrerequisiteStatus
+  allPassed: boolean
+  onActionComplete: () => void
 }
 
-export function HomeScreenContent(properties: HomeScreenContentProperties) {
+function ServiceReadyContent(properties: HomeScreenContentProperties) {
   const { t: tr } = useTranslation()
   const { labelKey, color: dotColor } = getStatusDisplay(
     properties.serviceRunning,
     properties.serviceStatus,
   )
-  const statusLabel = tr(labelKey)
+  return (
+    <>
+      <ServiceStatusCard
+        statusLabel={tr(labelKey)}
+        dotColor={dotColor}
+        serviceStatus={properties.serviceStatus}
+        lastTranscription={properties.lastTranscription}
+        pulseAnimation={properties.pulseAnimation}
+      />
+      <DemoInputSection />
+      {Platform.OS === "android" && (
+        <TouchableOpacity
+          style={[
+            styles.serviceButton,
+            properties.serviceRunning && styles.serviceButtonStop,
+          ]}
+          onPress={properties.handleToggleService}
+        >
+          <Text style={styles.serviceButtonText}>
+            {properties.serviceRunning
+              ? tr("home.stopService")
+              : tr("home.startService")}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </>
+  )
+}
+
+export function HomeScreenContent(properties: HomeScreenContentProperties) {
+  const { t: tr } = useTranslation()
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{tr("home.title")}</Text>
         <Text style={styles.subtitle}>{tr("home.subtitle")}</Text>
-        <ServiceStatusCard
-          statusLabel={statusLabel}
-          dotColor={dotColor}
-          serviceStatus={properties.serviceStatus}
-          lastTranscription={properties.lastTranscription}
-          pulseAnimation={properties.pulseAnimation}
-        />
-        <DemoInputSection />
-        {Platform.OS === "android" && (
-          <TouchableOpacity
-            style={[
-              styles.serviceButton,
-              properties.serviceRunning && styles.serviceButtonStop,
-            ]}
-            onPress={properties.handleToggleService}
-          >
-            <Text style={styles.serviceButtonText}>
-              {properties.serviceRunning
-                ? tr("home.stopService")
-                : tr("home.startService")}
-            </Text>
-          </TouchableOpacity>
+        {properties.allPassed ? (
+          <ServiceReadyContent {...properties} />
+        ) : (
+          <>
+            <Text style={styles.subtitle}>{tr("home.setupRequired")}</Text>
+            <IssueCardList
+              status={properties.prereqStatus}
+              onActionComplete={properties.onActionComplete}
+            />
+          </>
         )}
         <TouchableOpacity
           style={styles.settingsButton}

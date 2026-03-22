@@ -12,6 +12,7 @@ interface ServicePollingOptions {
   hydrated: boolean
   onboardingComplete: boolean
   autoStart: boolean
+  allPassed: boolean
 }
 
 interface ServicePollingResult {
@@ -39,19 +40,25 @@ export function useServicePolling(
   options: ServicePollingOptions,
 ): ServicePollingResult {
   const poll = useServiceStatusPoll()
-  const { hydrated, onboardingComplete, autoStart } = options
+  const { hydrated, onboardingComplete, autoStart, allPassed } = options
 
   useEffect(() => {
     if (
       hydrated &&
       onboardingComplete &&
       autoStart &&
-      Platform.OS === "android" &&
-      SheptNative.isOverlayPermissionGranted()
+      allPassed &&
+      Platform.OS === "android"
     ) {
       startOverlayService(poll)
     }
-  }, [hydrated, onboardingComplete, autoStart, poll])
+  }, [hydrated, onboardingComplete, autoStart, allPassed, poll])
+
+  useEffect(() => {
+    if (!allPassed && poll.serviceRunning) {
+      stopOverlayService(poll)
+    }
+  }, [allPassed, poll])
 
   const handleToggleService = useCallback(() => {
     if (Platform.OS !== "android") {
@@ -61,12 +68,11 @@ export function useServicePolling(
       stopOverlayService(poll)
       return
     }
-    if (!SheptNative.isOverlayPermissionGranted()) {
-      SheptNative.requestOverlayPermission()
+    if (!allPassed) {
       return
     }
     startOverlayService(poll)
-  }, [poll])
+  }, [poll, allPassed])
 
   return {
     serviceStatus: poll.serviceStatus,

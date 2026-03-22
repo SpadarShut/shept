@@ -4,6 +4,7 @@ import { router } from "expo-router"
 
 import { useSettingsStore } from "../src/stores/settings-store"
 import { useServicePolling } from "../src/hooks/use-service-polling"
+import { usePrerequisites } from "../src/hooks/use-prerequisites"
 import { usePulseAnimation } from "../src/hooks/use-pulse-animation"
 import { homeScreenStyles as styles } from "../src/styles/home-screen-styles"
 import { HomeScreenContent } from "../src/components/home-screen-content"
@@ -14,14 +15,27 @@ export default function HomeScreen() {
     (state) => state.onboardingComplete,
   )
   const autoStart = useSettingsStore((state) => state.autoStart)
+  const elevenLabsApiKey = useSettingsStore((state) => state.elevenLabsApiKey)
+  const googleCloudApiKey = useSettingsStore((state) => state.googleCloudApiKey)
+  const sttProvider = useSettingsStore((state) => state.sttProvider)
   const hydrate = useSettingsStore((state) => state.hydrate)
+
+  const {
+    status: prereqStatus,
+    allPassed,
+    recheck,
+  } = usePrerequisites({
+    elevenLabsApiKey,
+    googleCloudApiKey,
+    sttProvider,
+  })
 
   const {
     serviceStatus,
     lastTranscription,
     serviceRunning,
     handleToggleService,
-  } = useServicePolling({ hydrated, onboardingComplete, autoStart })
+  } = useServicePolling({ hydrated, onboardingComplete, autoStart, allPassed })
 
   const pulseAnimation = usePulseAnimation(serviceStatus)
 
@@ -50,6 +64,9 @@ export default function HomeScreen() {
       serviceRunning={serviceRunning}
       pulseAnimation={pulseAnimation}
       handleToggleService={handleToggleService}
+      prereqStatus={prereqStatus}
+      allPassed={allPassed}
+      onActionComplete={recheck}
     />
   )
 }
