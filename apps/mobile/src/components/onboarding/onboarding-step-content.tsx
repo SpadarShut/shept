@@ -1,14 +1,6 @@
 import { useTranslation } from "react-i18next"
 import type { OnboardingPermissions } from "./use-onboarding-permissions"
-import {
-  STEP_LANGUAGES,
-  STEP_NOTIFICATIONS,
-  STEP_OVERLAY,
-  STEP_ACCESSIBILITY,
-  STEP_MICROPHONE,
-  STEP_API_KEYS,
-  STEP_FINISH,
-} from "./onboarding-constants"
+import { STEPS } from "./onboarding-constants"
 import {
   WelcomeStep,
   LanguageStep,
@@ -46,7 +38,7 @@ function renderPermissionStep({
   translate,
 }: PermissionStepArguments): React.JSX.Element | undefined {
   switch (step) {
-    case STEP_NOTIFICATIONS: {
+    case STEPS.indexOf("NOTIFICATIONS"): {
       return (
         <PermissionStep
           title={translate("onboarding.notifications.title")}
@@ -57,7 +49,7 @@ function renderPermissionStep({
         />
       )
     }
-    case STEP_OVERLAY: {
+    case STEPS.indexOf("OVERLAY"): {
       return (
         <PermissionStep
           title={translate("onboarding.overlay.title")}
@@ -68,7 +60,7 @@ function renderPermissionStep({
         />
       )
     }
-    case STEP_MICROPHONE: {
+    case STEPS.indexOf("MICROPHONE"): {
       return (
         <PermissionStep
           title={translate("onboarding.microphone.title")}
@@ -100,7 +92,7 @@ export function OnboardingStepContent(
   }
 
   switch (properties.step) {
-    case STEP_LANGUAGES: {
+    case STEPS.indexOf("LANGUAGES"): {
       return (
         <LanguageStep
           selectedLanguages={properties.selectedLanguages}
@@ -108,7 +100,7 @@ export function OnboardingStepContent(
         />
       )
     }
-    case STEP_ACCESSIBILITY: {
+    case STEPS.indexOf("ACCESSIBILITY"): {
       return (
         <AccessibilityStep
           accessibilityGranted={properties.permissions.accessibilityGranted}
@@ -116,7 +108,7 @@ export function OnboardingStepContent(
         />
       )
     }
-    case STEP_API_KEYS: {
+    case STEPS.indexOf("API_KEYS"): {
       return (
         <ApiKeyStep
           provider={properties.provider}
@@ -128,7 +120,7 @@ export function OnboardingStepContent(
         />
       )
     }
-    case STEP_FINISH: {
+    case STEPS.indexOf("FINISH"): {
       return <FinishStep onFinish={properties.onFinish} />
     }
     default: {

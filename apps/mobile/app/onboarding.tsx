@@ -1,11 +1,10 @@
-import { View, TouchableOpacity, Text } from "react-native"
+import { Text, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useTranslation } from "react-i18next"
 import { onboardingStyles as styles } from "../src/components/onboarding/onboarding-styles"
 import {
-  TOTAL_STEPS,
-  STEP_FINISH,
   BACK_BUTTON_WIDTH,
+  STEPS,
 } from "../src/components/onboarding/onboarding-constants"
 import { StepDots } from "../src/components/onboarding/onboarding-steps"
 import { OnboardingStepContent } from "../src/components/onboarding/onboarding-step-content"
@@ -16,7 +15,7 @@ export default function OnboardingScreen(): React.JSX.Element {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StepDots current={state.step} total={TOTAL_STEPS} />
+      <StepDots current={state.step} total={STEPS.length} />
       <View style={styles.flex1}>
         <OnboardingStepContent
           step={state.step}
@@ -32,7 +31,7 @@ export default function OnboardingScreen(): React.JSX.Element {
           onFinish={state.handleFinish}
         />
       </View>
-      {state.step < STEP_FINISH && (
+      {state.step < STEPS.indexOf("FINISH") && (
         <NavigationRow
           step={state.step}
           isNextEnabled={state.isNextEnabled}

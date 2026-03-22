@@ -1,17 +1,9 @@
-import { useState, useCallback } from "react"
+import { useCallback, useState } from "react"
 import { router } from "expo-router"
 import { useSettingsStore } from "../../stores/settings-store"
-import { useOnboardingPermissions } from "./use-onboarding-permissions"
 import type { OnboardingPermissions } from "./use-onboarding-permissions"
-import {
-  TOTAL_STEPS,
-  STEP_LANGUAGES,
-  STEP_NOTIFICATIONS,
-  STEP_OVERLAY,
-  STEP_ACCESSIBILITY,
-  STEP_MICROPHONE,
-  STEP_API_KEYS,
-} from "./onboarding-constants"
+import { useOnboardingPermissions } from "./use-onboarding-permissions"
+import { STEPS } from "./onboarding-constants"
 
 interface CanProceedInput {
   step: number
@@ -23,22 +15,22 @@ interface CanProceedInput {
 
 function canProceed(input: CanProceedInput): boolean {
   switch (input.step) {
-    case STEP_LANGUAGES: {
+    case STEPS.indexOf("LANGUAGES"): {
       return input.selectedLanguages.length > 0
     }
-    case STEP_NOTIFICATIONS: {
+    case STEPS.indexOf("NOTIFICATIONS"): {
       return input.permissions.notificationGranted
     }
-    case STEP_OVERLAY: {
+    case STEPS.indexOf("OVERLAY"): {
       return input.permissions.overlayGranted
     }
-    case STEP_ACCESSIBILITY: {
+    case STEPS.indexOf("ACCESSIBILITY"): {
       return input.permissions.accessibilityGranted
     }
-    case STEP_MICROPHONE: {
+    case STEPS.indexOf("MICROPHONE"): {
       return input.permissions.microphoneGranted
     }
-    case STEP_API_KEYS: {
+    case STEPS.indexOf("API_KEYS"): {
       return (
         input.elevenLabsKey.trim().length > 0 ||
         input.googleKey.trim().length > 0
@@ -82,7 +74,7 @@ function useLanguageToggle() {
 
 function useStepNavigation(step: number, setStep: (value: number) => void) {
   const handleNext = useCallback(() => {
-    if (step < TOTAL_STEPS - 1) {
+    if (step < STEPS.length - 1) {
       setStep(step + 1)
     }
   }, [step, setStep])
