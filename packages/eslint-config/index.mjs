@@ -50,6 +50,12 @@ export const core = [
       ],
     },
   },
+  {
+    files: ["**/*.tsx"],
+    rules: {
+      "max-lines-per-function": ["error", { max: 70, skipBlankLines: true }],
+    },
+  },
 ]
 
 export const recommended = [

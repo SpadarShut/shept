@@ -71,6 +71,9 @@ importers:
       "@testing-library/react-native":
         specifier: ^13.3.3
         version: 13.3.3(jest@30.3.0(@types/node@25.5.0))(react-native@0.83.2(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react-test-renderer@19.2.0(react@19.2.0))(react@19.2.0)
+      "@types/jest":
+        specifier: ^30.0.0
+        version: 30.0.0
       "@types/react":
         specifier: ~19.2.2
         version: 19.2.14
@@ -2125,6 +2128,12 @@ packages:
     resolution:
       {
         integrity: sha512-pk2B1NWalF9toCRu6gjBzR69syFjP4Od8WRAX+0mmf9lAjCRicLOWc+ZrxZHx/0XRjotgkF9t6iaMJ+aXcOdZQ==,
+      }
+
+  "@types/jest@30.0.0":
+    resolution:
+      {
+        integrity: sha512-XTYugzhuwqWjws0CVz8QpM36+T+Dz5mTEBKhNs/esGLnCIlGdRy+Dq78NRjd7ls7r8BC8ZRMOrKlkO1hU0JOwA==,
       }
 
   "@types/jsdom@20.0.1":
@@ -9930,6 +9939,11 @@ snapshots:
   "@types/istanbul-reports@3.0.4":
     dependencies:
       "@types/istanbul-lib-report": 3.0.3
+
+  "@types/jest@30.0.0":
+    dependencies:
+      expect: 30.3.0
+      pretty-format: 30.3.0
 
   "@types/jsdom@20.0.1":
     dependencies:

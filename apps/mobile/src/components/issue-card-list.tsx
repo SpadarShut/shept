@@ -1,4 +1,3 @@
-import React from "react"
 import { View, PermissionsAndroid } from "react-native"
 import { router } from "expo-router"
 import { IssueCard } from "./issue-card"

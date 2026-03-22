@@ -1,4 +1,3 @@
-import React from "react"
 import { render } from "@testing-library/react-native"
 import { IssueCardList } from "../issue-card-list"
 import type { PrerequisiteStatus } from "../../hooks/use-prerequisites"
