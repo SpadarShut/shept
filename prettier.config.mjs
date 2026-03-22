@@ -1,6 +1,6 @@
 export default {
-  semi: true,
+  semi: false,
   singleQuote: false,
   tabWidth: 2,
   trailingComma: "all",
-};
+}

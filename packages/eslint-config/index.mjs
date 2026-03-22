@@ -1,13 +1,16 @@
-import noComments from "eslint-plugin-no-comments";
-import betterMaxParams from "eslint-plugin-better-max-params";
-import sonarjs from "eslint-plugin-sonarjs";
-import unicorn from "eslint-plugin-unicorn";
-import security from "eslint-plugin-security";
-import reactPlugin from "eslint-plugin-react";
-import globals from "globals";
+import noComments from "eslint-plugin-no-comments"
+import betterMaxParams from "eslint-plugin-better-max-params"
+import sonarjs from "eslint-plugin-sonarjs"
+import unicorn from "eslint-plugin-unicorn"
+import security from "eslint-plugin-security"
+import reactPlugin from "eslint-plugin-react"
+import globals from "globals"
+import tseslint from "typescript-eslint"
 
 export const core = [
+  ...tseslint.configs.recommended,
   {
+    files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "**/*.mjs"],
     plugins: {
       "no-comments": noComments,
       "better-max-params": betterMaxParams,
@@ -18,10 +21,7 @@ export const core = [
         "error",
         { constructor: 10, func: 2 },
       ],
-      "max-lines-per-function": [
-        "error",
-        { max: 50, skipBlankLines: true },
-      ],
+      "max-lines-per-function": ["error", { max: 50, skipBlankLines: true }],
       "max-lines": ["error", { max: 250, skipBlankLines: true }],
       "no-magic-numbers": [
         "error",
@@ -50,13 +50,13 @@ export const core = [
       ],
     },
   },
-];
+]
 
 export const recommended = [
   sonarjs.configs.recommended,
   unicorn.configs["recommended"],
   security.configs.recommended,
-];
+]
 
 export const react = [
   reactPlugin.configs.flat.recommended,
@@ -69,4 +69,4 @@ export const react = [
       react: { version: "detect" },
     },
   },
-];
+]

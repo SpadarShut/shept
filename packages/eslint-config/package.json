@@ -10,12 +10,13 @@
     "eslint": "^9.0.0"
   },
   "dependencies": {
-    "eslint-plugin-no-comments": "*",
     "eslint-plugin-better-max-params": "*",
+    "eslint-plugin-no-comments": "*",
+    "eslint-plugin-react": "*",
+    "eslint-plugin-security": "*",
     "eslint-plugin-sonarjs": "*",
     "eslint-plugin-unicorn": "*",
-    "eslint-plugin-security": "*",
-    "eslint-plugin-react": "*",
-    "globals": "*"
+    "globals": "*",
+    "typescript-eslint": "^8.57.1"
   }
 }
