@@ -19,6 +19,7 @@ const en = {
     seeInAction: "See in action",
     demoPlaceholder: "Focus here, then tap the overlay\u2026",
     clear: "Clear",
+    setupRequired: "To start, set up the following:",
   },
   settings: {
     provider: "Provider",

@@ -19,6 +19,7 @@ const be = {
     seeInAction: "Паглядзіце ў дзеянні",
     demoPlaceholder: "Сфакусуйцеся тут, затым націсніце на накладку\u2026",
     clear: "Ачысціць",
+    setupRequired: "Каб пачаць, наладзьце наступнае:",
   },
   settings: {
     provider: "Правайдэр",
