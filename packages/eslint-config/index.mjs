@@ -3,6 +3,8 @@ import betterMaxParams from "eslint-plugin-better-max-params";
 import sonarjs from "eslint-plugin-sonarjs";
 import unicorn from "eslint-plugin-unicorn";
 import security from "eslint-plugin-security";
+import reactPlugin from "eslint-plugin-react";
+import globals from "globals";
 
 export const core = [
   {
@@ -56,4 +58,15 @@ export const recommended = [
   security.configs.recommended,
 ];
 
-export const react = [];
+export const react = [
+  reactPlugin.configs.flat.recommended,
+  reactPlugin.configs.flat["jsx-runtime"],
+  {
+    languageOptions: {
+      globals: globals.browser,
+    },
+    settings: {
+      react: { version: "detect" },
+    },
+  },
+];
