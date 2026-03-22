@@ -1,5 +1,8 @@
 import noComments from "eslint-plugin-no-comments";
 import betterMaxParams from "eslint-plugin-better-max-params";
+import sonarjs from "eslint-plugin-sonarjs";
+import unicorn from "eslint-plugin-unicorn";
+import security from "eslint-plugin-security";
 
 export const core = [
   {
@@ -45,6 +48,12 @@ export const core = [
       ],
     },
   },
+];
+
+export const recommended = [
+  sonarjs.configs.recommended,
+  unicorn.configs["recommended"],
+  security.configs.recommended,
 ];
 
 export const react = [];
