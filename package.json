@@ -4,6 +4,8 @@
   "scripts": {
     "dev": "pnpm --filter mobile start",
     "android": "pnpm --filter mobile android",
-    "test": "pnpm --filter mobile test"
+    "test": "pnpm --filter mobile test",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix"
   }
 }
