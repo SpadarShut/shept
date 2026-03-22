@@ -17,7 +17,7 @@ export default function RootLayout() {
     if (!hydrated) return
     const lng = appLanguage === "system" ? systemLng : appLanguage
     if (i18next.language !== lng) {
-      i18next.changeLanguage(lng).catch(() => {})
+      i18next.changeLanguage(lng).catch(console.error)
     }
   }, [appLanguage, hydrated])
 
