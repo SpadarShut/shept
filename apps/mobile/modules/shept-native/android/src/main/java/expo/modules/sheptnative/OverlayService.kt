@@ -392,6 +392,7 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                     setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
                     setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
                 }
+                setAudioSamplingRate(16000)
                 setOutputFile(outputFile?.absolutePath)
                 prepare()
                 start()

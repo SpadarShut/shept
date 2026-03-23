@@ -80,8 +80,9 @@ object SttClient {
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("file", file.name, file.asRequestBody(mediaType))
-            .addFormDataPart("model_id", "scribe_v1")
+            .addFormDataPart("model_id", "scribe_v2")
             .addFormDataPart("language_code", language)
+            .addFormDataPart("tag_audio_events", "false")
             .build()
 
         val request = Request.Builder()
