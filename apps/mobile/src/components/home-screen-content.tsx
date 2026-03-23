@@ -3,7 +3,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   ScrollView,
-  Platform,
 } from "react-native"
 import { Animated } from "react-native"
 import { router } from "expo-router"
@@ -42,7 +41,6 @@ function getStatusDisplay(
 
 interface HomeScreenContentProperties {
   serviceStatus: string
-  lastTranscription: string
   serviceRunning: boolean
   pulseAnimation: Animated.Value
   handleToggleService: () => void
@@ -63,25 +61,11 @@ function ServiceReadyContent(properties: HomeScreenContentProperties) {
         statusLabel={tr(labelKey)}
         dotColor={dotColor}
         serviceStatus={properties.serviceStatus}
-        lastTranscription={properties.lastTranscription}
+        serviceRunning={properties.serviceRunning}
         pulseAnimation={properties.pulseAnimation}
+        onToggleService={properties.handleToggleService}
       />
       <DemoInputSection />
-      {Platform.OS === "android" && (
-        <TouchableOpacity
-          style={[
-            styles.serviceButton,
-            properties.serviceRunning && styles.serviceButtonStop,
-          ]}
-          onPress={properties.handleToggleService}
-        >
-          <Text style={styles.serviceButtonText}>
-            {properties.serviceRunning
-              ? tr("home.stopService")
-              : tr("home.startService")}
-          </Text>
-        </TouchableOpacity>
-      )}
     </>
   )
 }

@@ -1,15 +1,15 @@
-import { View, Text, Animated } from "react-native"
+import { View, Text, Animated, TouchableOpacity, Platform } from "react-native"
 import { useTranslation } from "react-i18next"
 
 import { homeScreenStyles as styles } from "../styles/home-screen-styles"
-import { TRANSCRIPTION_MAX_LINES } from "../constants/home-screen"
 
 interface ServiceStatusCardProperties {
   statusLabel: string
   dotColor: string
   serviceStatus: string
-  lastTranscription: string
+  serviceRunning: boolean
   pulseAnimation: Animated.Value
+  onToggleService: () => void
 }
 
 export function ServiceStatusCard(properties: ServiceStatusCardProperties) {
@@ -29,13 +29,20 @@ export function ServiceStatusCard(properties: ServiceStatusCardProperties) {
         />
         <Text style={styles.statusValue}>{properties.statusLabel}</Text>
       </View>
-      {properties.lastTranscription !== "" && (
-        <Text
-          style={styles.transcriptionText}
-          numberOfLines={TRANSCRIPTION_MAX_LINES}
+      {Platform.OS === "android" && (
+        <TouchableOpacity
+          style={[
+            styles.serviceButton,
+            properties.serviceRunning && styles.serviceButtonStop,
+          ]}
+          onPress={properties.onToggleService}
         >
-          {properties.lastTranscription}
-        </Text>
+          <Text style={styles.serviceButtonText}>
+            {properties.serviceRunning
+              ? tr("home.stopService")
+              : tr("home.startService")}
+          </Text>
+        </TouchableOpacity>
       )}
     </View>
   )

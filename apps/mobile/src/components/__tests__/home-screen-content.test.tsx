@@ -35,7 +35,6 @@ const someFailedStatus: PrerequisiteStatus = {
 
 const baseProperties = {
   serviceStatus: "idle",
-  lastTranscription: "",
   serviceRunning: false,
   pulseAnimation: new Animated.Value(1),
   handleToggleService: jest.fn(),
