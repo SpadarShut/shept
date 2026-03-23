@@ -45,7 +45,7 @@ const STATIC_ISSUES: Omit<IssueDefinition, "onAction">[] = [
   {
     key: "apiKey",
     title: "API Key Missing",
-    description: "Set up an ElevenLabs or Google Cloud API key",
+    description: "Set up an ElevenLabs API key",
     actionLabel: "Set up",
   },
 ]

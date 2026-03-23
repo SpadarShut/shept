@@ -33,22 +33,6 @@ export function ProviderSection({
             {tr("settings.fieldElevenLabs")}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.providerBtn,
-            sttProvider === "google" && styles.providerBtnActive,
-          ]}
-          onPress={() => onSelect("google")}
-        >
-          <Text
-            style={[
-              styles.providerBtnText,
-              sttProvider === "google" && styles.providerBtnTextActive,
-            ]}
-          >
-            {tr("settings.fieldGoogle")}
-          </Text>
-        </TouchableOpacity>
       </View>
     </>
   )

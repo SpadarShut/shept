@@ -16,7 +16,6 @@ function resolvePrimaryLanguage(next: string[], current: string): string {
 export default function SettingsScreen() {
   const sttProvider = useSettingsStore((state) => state.sttProvider)
   const elevenLabsApiKey = useSettingsStore((state) => state.elevenLabsApiKey)
-  const googleCloudApiKey = useSettingsStore((state) => state.googleCloudApiKey)
   const languages = useSettingsStore((state) => state.languages)
   const primaryLanguage = useSettingsStore((state) => state.primaryLanguage)
   const autoStart = useSettingsStore((state) => state.autoStart)
@@ -47,9 +46,7 @@ export default function SettingsScreen() {
         />
         <ApiKeysSection
           elevenLabsApiKey={elevenLabsApiKey}
-          googleCloudApiKey={googleCloudApiKey}
           onChangeElevenLabs={(value) => set("elevenLabsApiKey", value)}
-          onChangeGoogle={(value) => set("googleCloudApiKey", value)}
         />
         <LanguagesSection languages={languages} onToggle={toggleLang} />
         <AutoStartSection

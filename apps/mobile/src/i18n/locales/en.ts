@@ -25,10 +25,8 @@ const en = {
     provider: "Provider",
     apiKeys: "API Keys",
     fieldElevenLabs: "ElevenLabs",
-    fieldGoogle: "Google Cloud",
     enterApiKey: "Enter API key",
     getElevenLabsKey: "Get your ElevenLabs API key",
-    getGoogleKey: "Get your Google Cloud API key",
     languages: "Languages",
     searchLanguages: "Search languages...",
     autoStart: "Auto-start",
@@ -77,15 +75,10 @@ const en = {
     },
     apiKey: {
       title: "API Key Setup",
-      provider: "Provider",
       elevenLabsLabel: "ElevenLabs API Key",
       elevenLabsPlaceholder: "Enter ElevenLabs API key",
       elevenLabsLink:
         "Get your ElevenLabs API key at elevenlabs.io/app/settings/api-keys",
-      googleLabel: "Google Cloud API Key",
-      googlePlaceholder: "Enter Google Cloud API key",
-      googleLink:
-        "Get your Google Cloud API key at console.cloud.google.com/apis/credentials",
     },
   },
 }

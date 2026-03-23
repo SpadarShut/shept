@@ -15,12 +15,8 @@ export interface OnboardingStepContentProperties {
   selectedLanguages: string[]
   toggleLanguage: (code: string) => void
   permissions: OnboardingPermissions
-  provider: "elevenlabs" | "google"
-  setProvider: (value: "elevenlabs" | "google") => void
   elevenLabsKey: string
   setElevenLabsKey: (value: string) => void
-  googleKey: string
-  setGoogleKey: (value: string) => void
   onFinish: () => void
 }
 
@@ -111,12 +107,8 @@ export function OnboardingStepContent(
     case STEPS.indexOf("API_KEYS"): {
       return (
         <ApiKeyStep
-          provider={properties.provider}
-          setProvider={properties.setProvider}
           elevenLabsKey={properties.elevenLabsKey}
           setElevenLabsKey={properties.setElevenLabsKey}
-          googleKey={properties.googleKey}
-          setGoogleKey={properties.setGoogleKey}
         />
       )
     }

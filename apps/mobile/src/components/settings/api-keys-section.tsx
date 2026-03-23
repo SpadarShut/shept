@@ -4,9 +4,7 @@ import { styles } from "./settings-styles"
 
 interface ApiKeysSectionProperties {
   elevenLabsApiKey: string
-  googleCloudApiKey: string
   onChangeElevenLabs: (value: string) => void
-  onChangeGoogle: (value: string) => void
 }
 
 interface SingleKeyInputProperties {
@@ -41,40 +39,9 @@ function ElevenLabsKeyInput({ value, onChange }: SingleKeyInputProperties) {
   )
 }
 
-function GoogleKeyInput({ value, onChange }: SingleKeyInputProperties) {
-  const { t: tr } = useTranslation()
-  return (
-    <>
-      <Text style={[styles.fieldLabel, { marginTop: 16 }]}>
-        {tr("settings.fieldGoogle")}
-      </Text>
-      <TextInput
-        style={styles.apiInput}
-        secureTextEntry
-        placeholder={tr("settings.enterApiKey")}
-        placeholderTextColor="#999"
-        value={value}
-        onChangeText={onChange}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-      <Text
-        style={styles.linkText}
-        onPress={() =>
-          Linking.openURL("https://console.cloud.google.com/apis/credentials")
-        }
-      >
-        {tr("settings.getGoogleKey")}
-      </Text>
-    </>
-  )
-}
-
 export function ApiKeysSection({
   elevenLabsApiKey,
-  googleCloudApiKey,
   onChangeElevenLabs,
-  onChangeGoogle,
 }: ApiKeysSectionProperties) {
   const { t: tr } = useTranslation()
   return (
@@ -84,7 +51,6 @@ export function ApiKeysSection({
         value={elevenLabsApiKey}
         onChange={onChangeElevenLabs}
       />
-      <GoogleKeyInput value={googleCloudApiKey} onChange={onChangeGoogle} />
     </>
   )
 }
