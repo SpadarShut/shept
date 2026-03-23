@@ -22,12 +22,8 @@ export default function OnboardingScreen(): React.JSX.Element {
           selectedLanguages={state.selectedLanguages}
           toggleLanguage={state.toggleLanguage}
           permissions={state.permissions}
-          provider={state.provider}
-          setProvider={state.setProvider}
           elevenLabsKey={state.elevenLabsKey}
           setElevenLabsKey={state.setElevenLabsKey}
-          googleKey={state.googleKey}
-          setGoogleKey={state.setGoogleKey}
           onFinish={state.handleFinish}
         />
       </View>

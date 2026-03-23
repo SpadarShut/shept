@@ -25,10 +25,8 @@ const be = {
     provider: "Правайдэр",
     apiKeys: "Ключы API",
     fieldElevenLabs: "ElevenLabs",
-    fieldGoogle: "Google Cloud",
     enterApiKey: "Увядзіце ключ API",
     getElevenLabsKey: "Атрымаць ключ API ElevenLabs",
-    getGoogleKey: "Атрымаць ключ API Google Cloud",
     languages: "Мовы",
     searchLanguages: "Пошук моў...",
     autoStart: "Аўтазапуск",
@@ -77,15 +75,10 @@ const be = {
     },
     apiKey: {
       title: "Наладка ключа API",
-      provider: "Правайдэр",
       elevenLabsLabel: "Ключ API ElevenLabs",
       elevenLabsPlaceholder: "Увядзіце ключ API ElevenLabs",
       elevenLabsLink:
         "Атрымаць ключ API ElevenLabs на elevenlabs.io/app/settings/api-keys",
-      googleLabel: "Ключ API Google Cloud",
-      googlePlaceholder: "Увядзіце ключ API Google Cloud",
-      googleLink:
-        "Атрымаць ключ API Google Cloud на console.cloud.google.com/apis/credentials",
     },
   },
 }

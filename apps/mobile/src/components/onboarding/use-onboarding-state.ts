@@ -10,7 +10,6 @@ interface CanProceedInput {
   selectedLanguages: string[]
   permissions: OnboardingPermissions
   elevenLabsKey: string
-  googleKey: string
 }
 
 function canProceed(input: CanProceedInput): boolean {
@@ -31,10 +30,7 @@ function canProceed(input: CanProceedInput): boolean {
       return input.permissions.microphoneGranted
     }
     case STEPS.indexOf("API_KEYS"): {
-      return (
-        input.elevenLabsKey.trim().length > 0 ||
-        input.googleKey.trim().length > 0
-      )
+      return input.elevenLabsKey.trim().length > 0
     }
     default: {
       return true
@@ -45,14 +41,10 @@ function canProceed(input: CanProceedInput): boolean {
 export interface OnboardingState {
   step: number
   selectedLanguages: string[]
-  provider: "elevenlabs" | "google"
   elevenLabsKey: string
-  googleKey: string
   permissions: OnboardingPermissions
   isNextEnabled: boolean
-  setProvider: (value: "elevenlabs" | "google") => void
   setElevenLabsKey: (value: string) => void
-  setGoogleKey: (value: string) => void
   toggleLanguage: (code: string) => void
   handleNext: () => void
   handleBack: () => void
@@ -91,11 +83,7 @@ function useStepNavigation(step: number, setStep: (value: number) => void) {
 export function useOnboardingState(): OnboardingState {
   const [step, setStep] = useState(0)
   const { selectedLanguages, toggleLanguage } = useLanguageToggle()
-  const [provider, setProvider] = useState<"elevenlabs" | "google">(
-    "elevenlabs",
-  )
   const [elevenLabsKey, setElevenLabsKey] = useState("")
-  const [googleKey, setGoogleKey] = useState("")
   const setMany = useSettingsStore((state) => state.setMany)
   const permissions = useOnboardingPermissions()
   const { handleNext, handleBack } = useStepNavigation(step, setStep)
@@ -104,32 +92,26 @@ export function useOnboardingState(): OnboardingState {
     setMany({
       languages: selectedLanguages,
       primaryLanguage: selectedLanguages[0] ?? "",
-      sttProvider: provider,
+      sttProvider: "elevenlabs",
       elevenLabsApiKey: elevenLabsKey,
-      googleCloudApiKey: googleKey,
       onboardingComplete: true,
       autoStart: true,
     })
     router.replace("/")
-  }, [selectedLanguages, provider, elevenLabsKey, googleKey, setMany])
+  }, [selectedLanguages, elevenLabsKey, setMany])
 
   return {
     step,
     selectedLanguages,
-    provider,
     elevenLabsKey,
-    googleKey,
     permissions,
     isNextEnabled: canProceed({
       step,
       selectedLanguages,
       permissions,
       elevenLabsKey,
-      googleKey,
     }),
-    setProvider,
     setElevenLabsKey,
-    setGoogleKey,
     toggleLanguage,
     handleNext,
     handleBack,
