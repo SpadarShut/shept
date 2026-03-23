@@ -36,8 +36,8 @@ export const core = [
       "max-depth": ["error", 4],
       "max-statements": ["error", 20],
       "max-classes-per-file": ["error", 1],
-      "no-console": "error",
-      "id-length": ["error", { min: 2 }],
+      "no-console": ["error", { allow: ["warn", "error"] }],
+      "id-length": "off",
       eqeqeq: ["error", "always"],
       "no-restricted-syntax": [
         "error",

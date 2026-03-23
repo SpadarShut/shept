@@ -72,12 +72,6 @@ export function LanguageStep({
         value={languageSearch}
         onChangeText={setLanguageSearch}
       />
-      {selectedLanguages.length > 0 && (
-        <SelectedLanguageChips
-          selectedLanguages={selectedLanguages}
-          toggleLanguage={toggleLanguage}
-        />
-      )}
       <FlatList
         data={filteredLanguages}
         keyExtractor={(item) => item.code}
@@ -99,33 +93,6 @@ export function LanguageStep({
           )
         }}
       />
-    </View>
-  )
-}
-
-interface SelectedLanguageChipsProperties {
-  selectedLanguages: string[]
-  toggleLanguage: (code: string) => void
-}
-
-function SelectedLanguageChips({
-  selectedLanguages,
-  toggleLanguage,
-}: SelectedLanguageChipsProperties): React.JSX.Element {
-  return (
-    <View style={styles.chipsRow}>
-      {selectedLanguages.map((code) => {
-        const language = LANGUAGES.find((candidate) => candidate.code === code)
-        return (
-          <TouchableOpacity
-            key={code}
-            style={styles.chip}
-            onPress={() => toggleLanguage(code)}
-          >
-            <Text style={styles.chipText}>{language?.name ?? code} x</Text>
-          </TouchableOpacity>
-        )
-      })}
     </View>
   )
 }

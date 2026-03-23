@@ -4,7 +4,6 @@ import { HomeScreenContent } from "../home-screen-content"
 import type { PrerequisiteStatus } from "../../hooks/use-prerequisites"
 
 jest.mock("react-i18next", () => ({
-  // eslint-disable-next-line id-length
   useTranslation: () => ({ t: (translationKey: string) => translationKey }),
 }))
 
