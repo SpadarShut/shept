@@ -182,9 +182,9 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 100
-            y = 300
+            gravity = Gravity.CENTER_VERTICAL or Gravity.END
+            x = 8
+            y = 0
         }
         overlayParams = params
 
