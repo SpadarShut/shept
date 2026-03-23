@@ -21,7 +21,7 @@ export function ServiceStatusCard(properties: ServiceStatusCardProperties) {
         <Switch
           value={properties.serviceRunning}
           onValueChange={properties.onToggleService}
-          trackColor={{ true: "#333" }}
+          trackColor={{ false: "#ccc", true: "#333" }}
         />
       </View>
       <View style={styles.statusRow}>
