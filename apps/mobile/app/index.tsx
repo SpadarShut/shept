@@ -60,7 +60,6 @@ export default function HomeScreen() {
   return (
     <HomeScreenContent
       serviceStatus={serviceStatus}
-      lastTranscription={lastTranscription}
       serviceRunning={serviceRunning}
       pulseAnimation={pulseAnimation}
       handleToggleService={handleToggleService}
