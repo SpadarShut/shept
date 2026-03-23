@@ -1,12 +1,5 @@
 import { useState, useRef } from "react"
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  type ListRenderItemInfo,
-} from "react-native"
+import { View, Text, TouchableOpacity, Modal, FlatList } from "react-native"
 import i18next from "i18next"
 import { useTranslation } from "react-i18next"
 import { systemLng } from "../../i18n"
@@ -18,14 +11,46 @@ interface AppLanguageSectionProperties {
   onChange: (value: SheptSettings["appLanguage"]) => void
 }
 
-const OPTIONS: Array<{
+type LanguageOption = {
   value: SheptSettings["appLanguage"]
   labelKey: string
-}> = [
+}
+
+const OPTIONS: LanguageOption[] = [
   { value: "system", labelKey: "settings.appLanguageSystem" },
   { value: "en", labelKey: "settings.appLanguageEnglish" },
   { value: "be", labelKey: "settings.appLanguageBelarusian" },
 ]
+
+const DROPDOWN_GAP = 4
+
+function DropdownItem({
+  item,
+  isActive,
+  onSelect,
+}: {
+  item: LanguageOption
+  isActive: boolean
+  onSelect: (v: SheptSettings["appLanguage"]) => void
+}) {
+  const { t: tr } = useTranslation()
+  return (
+    <TouchableOpacity
+      style={[dropdownStyles.item, isActive && dropdownStyles.itemActive]}
+      onPress={() => onSelect(item.value)}
+    >
+      <Text
+        style={[
+          dropdownStyles.itemText,
+          isActive && dropdownStyles.itemTextActive,
+        ]}
+      >
+        {tr(item.labelKey)}
+      </Text>
+      {isActive && <Text style={dropdownStyles.check}>✓</Text>}
+    </TouchableOpacity>
+  )
+}
 
 export function AppLanguageSection({
   appLanguage,
@@ -33,7 +58,7 @@ export function AppLanguageSection({
 }: AppLanguageSectionProperties) {
   const { t: tr } = useTranslation()
   const [open, setOpen] = useState(false)
-  const triggerRef = useRef<View>(null)
+  const triggerReference = useRef<View>(null)
   const [dropdownTop, setDropdownTop] = useState(0)
 
   const selectedLabel =
@@ -48,31 +73,11 @@ export function AppLanguageSection({
   }
 
   const openDropdown = () => {
-    triggerRef.current?.measureInWindow((_x, y, _w, h) => {
-      setDropdownTop(y + h + 4)
-      setOpen(true)
-    })
-  }
-
-  const renderItem = ({
-    item,
-  }: ListRenderItemInfo<(typeof OPTIONS)[number]>) => {
-    const isActive = item.value === appLanguage
-    return (
-      <TouchableOpacity
-        style={[dropdownStyles.item, isActive && dropdownStyles.itemActive]}
-        onPress={() => handleSelect(item.value)}
-      >
-        <Text
-          style={[
-            dropdownStyles.itemText,
-            isActive && dropdownStyles.itemTextActive,
-          ]}
-        >
-          {tr(item.labelKey)}
-        </Text>
-        {isActive && <Text style={dropdownStyles.check}>✓</Text>}
-      </TouchableOpacity>
+    triggerReference.current?.measureInWindow(
+      (...arguments_: [number, number, number, number]) => {
+        setDropdownTop(arguments_[1] + arguments_[3] + DROPDOWN_GAP)
+        setOpen(true)
+      },
     )
   }
 
@@ -82,7 +87,7 @@ export function AppLanguageSection({
         {tr("settings.appLanguage")}
       </Text>
 
-      <View ref={triggerRef} collapsable={false}>
+      <View ref={triggerReference} collapsable={false}>
         <TouchableOpacity style={dropdownStyles.trigger} onPress={openDropdown}>
           <Text style={dropdownStyles.triggerText}>{tr(selectedLabel)}</Text>
           <Text style={dropdownStyles.arrow}>▼</Text>
@@ -104,7 +109,13 @@ export function AppLanguageSection({
             <FlatList
               data={OPTIONS}
               keyExtractor={(item) => item.value}
-              renderItem={renderItem}
+              renderItem={({ item }) => (
+                <DropdownItem
+                  item={item}
+                  isActive={item.value === appLanguage}
+                  onSelect={handleSelect}
+                />
+              )}
               scrollEnabled={false}
             />
           </View>

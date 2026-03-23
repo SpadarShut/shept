@@ -13,7 +13,6 @@ interface ServicePollingOptions {
 
 interface ServicePollingResult {
   serviceStatus: string
-  lastTranscription: string
   serviceRunning: boolean
   handleToggleService: () => void
 }
@@ -43,7 +42,6 @@ interface PollerSetters {
   serviceStartedReference: React.MutableRefObject<boolean>
   setServiceStatus: (s: string) => void
   setServiceRunning: (r: boolean) => void
-  setLastTranscription: (t: string) => void
 }
 
 function useStatusPoller(setters: PollerSetters) {
@@ -60,7 +58,6 @@ function useStatusPoller(setters: PollerSetters) {
         setters.setServiceRunning(true)
         setters.serviceStartedReference.current = true
       }
-      setters.setLastTranscription(SheptNative.getLastTranscription())
     } catch {}
   }, [setters])
 
@@ -86,7 +83,6 @@ export function useServicePolling(
   const { hydrated, onboardingComplete, autoStart, allPassed } = options
 
   const [serviceStatus, setServiceStatus] = useState("idle")
-  const [lastTranscription, setLastTranscription] = useState("")
   const [serviceRunning, setServiceRunning] = useState(false)
   const serviceStartedReference = useRef(false)
 
@@ -94,7 +90,6 @@ export function useServicePolling(
     serviceStartedReference,
     setServiceStatus,
     setServiceRunning,
-    setLastTranscription,
   })
 
   const state: ServiceState = {
@@ -133,7 +128,6 @@ export function useServicePolling(
 
   return {
     serviceStatus,
-    lastTranscription,
     serviceRunning,
     handleToggleService,
   }

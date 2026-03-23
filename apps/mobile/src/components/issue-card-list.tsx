@@ -54,24 +54,33 @@ function createAction(
   key: keyof PrerequisiteStatus,
   onActionComplete: () => void,
 ): () => void {
-  const actions: Record<keyof PrerequisiteStatus, () => void> = {
-    accessibility: () => SheptNative.openAccessibilitySettings(),
-    overlay: () => SheptNative.requestOverlayPermission(),
-    microphone: async () => {
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      )
-      onActionComplete()
-    },
-    notification: async () => {
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-      )
-      onActionComplete()
-    },
-    apiKey: () => router.push("/settings"),
+  switch (key) {
+    case "accessibility": {
+      return () => SheptNative.openAccessibilitySettings()
+    }
+    case "overlay": {
+      return () => SheptNative.requestOverlayPermission()
+    }
+    case "microphone": {
+      return async () => {
+        await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        )
+        onActionComplete()
+      }
+    }
+    case "notification": {
+      return async () => {
+        await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        )
+        onActionComplete()
+      }
+    }
+    case "apiKey": {
+      return () => router.push("/settings")
+    }
   }
-  return actions[key]
 }
 
 export function IssueCardList({

@@ -30,12 +30,8 @@ export default function HomeScreen() {
     sttProvider,
   })
 
-  const {
-    serviceStatus,
-    lastTranscription,
-    serviceRunning,
-    handleToggleService,
-  } = useServicePolling({ hydrated, onboardingComplete, autoStart, allPassed })
+  const { serviceStatus, serviceRunning, handleToggleService } =
+    useServicePolling({ hydrated, onboardingComplete, autoStart, allPassed })
 
   const pulseAnimation = usePulseAnimation(serviceStatus)
 
