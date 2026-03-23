@@ -52,6 +52,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: "#333",
+    backgroundColor: "#fff",
   },
   linkText: {
     fontSize: 13,
@@ -65,6 +66,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
+    color: "#333",
+    backgroundColor: "#fff",
     marginBottom: 8,
   },
   langRow: {

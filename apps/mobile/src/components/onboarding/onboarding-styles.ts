@@ -65,6 +65,8 @@ export const onboardingStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
+    color: "#333",
+    backgroundColor: "#fff",
     marginTop: 16,
     marginBottom: 8,
   },
@@ -164,6 +166,7 @@ export const onboardingStyles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: "#333",
+    backgroundColor: "#fff",
   },
   linkText: {
     fontSize: 13,
