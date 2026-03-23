@@ -1,4 +1,4 @@
-import { View, Text, Animated, TouchableOpacity, Platform } from "react-native"
+import { View, Text, Animated, Switch } from "react-native"
 import { useTranslation } from "react-i18next"
 
 import { homeScreenStyles as styles } from "../styles/home-screen-styles"
@@ -16,7 +16,14 @@ export function ServiceStatusCard(properties: ServiceStatusCardProperties) {
   const { t: tr } = useTranslation()
   return (
     <View style={styles.statusBox}>
-      <Text style={styles.statusLabel}>{tr("home.serviceStatus")}</Text>
+      <View style={styles.statusHeader}>
+        <Text style={styles.statusLabel}>{tr("home.serviceStatus")}</Text>
+        <Switch
+          value={properties.serviceRunning}
+          onValueChange={properties.onToggleService}
+          trackColor={{ true: "#333" }}
+        />
+      </View>
       <View style={styles.statusRow}>
         <Animated.View
           style={[
@@ -29,21 +36,6 @@ export function ServiceStatusCard(properties: ServiceStatusCardProperties) {
         />
         <Text style={styles.statusValue}>{properties.statusLabel}</Text>
       </View>
-      {Platform.OS === "android" && (
-        <TouchableOpacity
-          style={[
-            styles.serviceButton,
-            properties.serviceRunning && styles.serviceButtonStop,
-          ]}
-          onPress={properties.onToggleService}
-        >
-          <Text style={styles.serviceButtonText}>
-            {properties.serviceRunning
-              ? tr("home.stopService")
-              : tr("home.startService")}
-          </Text>
-        </TouchableOpacity>
-      )}
     </View>
   )
 }
