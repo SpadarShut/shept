@@ -26,13 +26,18 @@ export const homeScreenStyles = StyleSheet.create({
     padding: 24,
     borderRadius: 12,
     backgroundColor: "#f5f5f5",
-    alignItems: "center",
     width: "80%",
+  },
+  statusHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 12,
   },
   statusLabel: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 4,
   },
   statusRow: {
     flexDirection: "row",
@@ -46,23 +51,6 @@ export const homeScreenStyles = StyleSheet.create({
   },
   statusValue: {
     fontSize: 18,
-    fontWeight: "600",
-  },
-  serviceButton: {
-    marginTop: 16,
-    backgroundColor: "#4CAF50",
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    width: "100%",
-    alignItems: "center",
-  },
-  serviceButtonStop: {
-    backgroundColor: "#D32F2F",
-  },
-  serviceButtonText: {
-    color: "#fff",
-    fontSize: 16,
     fontWeight: "600",
   },
   settingsButton: {
