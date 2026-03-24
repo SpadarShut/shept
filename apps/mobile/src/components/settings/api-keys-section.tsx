@@ -7,23 +7,21 @@ interface ApiKeysSectionProperties {
   onChangeElevenLabs: (value: string) => void
 }
 
-interface SingleKeyInputProperties {
-  value: string
-  onChange: (value: string) => void
-}
-
-function ElevenLabsKeyInput({ value, onChange }: SingleKeyInputProperties) {
+export function ApiKeysSection({
+  elevenLabsApiKey,
+  onChangeElevenLabs,
+}: ApiKeysSectionProperties) {
   const { t: tr } = useTranslation()
   return (
     <>
-      <Text style={styles.fieldLabel}>{tr("settings.fieldElevenLabs")}</Text>
+      <Text style={styles.sectionTitle}>{tr("settings.apiKeys")}</Text>
       <TextInput
         style={styles.apiInput}
         secureTextEntry
         placeholder={tr("settings.enterApiKey")}
         placeholderTextColor="#999"
-        value={value}
-        onChangeText={onChange}
+        value={elevenLabsApiKey}
+        onChangeText={onChangeElevenLabs}
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -35,22 +33,6 @@ function ElevenLabsKeyInput({ value, onChange }: SingleKeyInputProperties) {
       >
         {tr("settings.getElevenLabsKey")}
       </Text>
-    </>
-  )
-}
-
-export function ApiKeysSection({
-  elevenLabsApiKey,
-  onChangeElevenLabs,
-}: ApiKeysSectionProperties) {
-  const { t: tr } = useTranslation()
-  return (
-    <>
-      <Text style={styles.sectionTitle}>{tr("settings.apiKeys")}</Text>
-      <ElevenLabsKeyInput
-        value={elevenLabsApiKey}
-        onChange={onChangeElevenLabs}
-      />
     </>
   )
 }

@@ -293,45 +293,59 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     }
 
     private fun onButtonTap() {
-        val realtimeMode = configReader.getRealtimeMode()
-        when (currentStatus) {
-            "idle" -> {
-                if (realtimeMode) {
-                    startRealtimeRecording()
-                } else {
-                    startRecording()
+        try {
+            val realtimeMode = configReader.getRealtimeMode()
+            when (currentStatus) {
+                "idle" -> {
+                    if (realtimeMode) {
+                        startRealtimeRecording()
+                    } else {
+                        startRecording()
+                    }
+                }
+                "recording" -> {
+                    if (realtimeMode) {
+                        stopRealtimeRecording()
+                    } else {
+                        stopBatchRecording()
+                    }
                 }
             }
-            "recording" -> {
-                if (realtimeMode) {
-                    stopRealtimeRecording()
-                } else {
-                    stopBatchRecording()
-                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to handle button tap", e)
+            mainHandler.post {
+                Toast.makeText(this, "Error reading settings", Toast.LENGTH_SHORT).show()
+                flashError()
             }
         }
     }
 
     private fun startRealtimeRecording() {
-        val apiKey = configReader.getApiKey()
-        val language = configReader.getPrimaryLanguage().ifEmpty { "en" }
-        if (apiKey.isEmpty()) {
-            Log.e(TAG, "No API key configured for realtime STT")
-            mainHandler.post {
-                Toast.makeText(this, "Error: No API key configured", Toast.LENGTH_SHORT).show()
-                flashError()
+        try {
+            val apiKey = configReader.getApiKey()
+            val language = configReader.getPrimaryLanguage().ifEmpty { "en" }
+            if (apiKey.isEmpty()) {
+                Log.e(TAG, "No API key configured for realtime STT")
+                mainHandler.post {
+                    Toast.makeText(this, "Error: No API key configured", Toast.LENGTH_SHORT).show()
+                    flashError()
+                }
+                return
             }
-            return
+
+            AccessibilityBridge.beginStreamingSession()
+            val session = StreamingTranscriptionSession(apiKey, language)
+            streamingSession = session
+            session.start()
+
+            currentStatus = "recording"
+            applyRecordingStyle()
+            Log.d(TAG, "Realtime recording started")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start realtime recording", e)
+            currentStatus = "idle"
+            applyIdleStyle()
         }
-
-        AccessibilityBridge.beginStreamingSession()
-        val session = StreamingTranscriptionSession(apiKey, language)
-        streamingSession = session
-        session.start()
-
-        currentStatus = "recording"
-        applyRecordingStyle()
-        Log.d(TAG, "Realtime recording started")
     }
 
     private fun stopRealtimeRecording() {

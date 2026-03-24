@@ -13,7 +13,7 @@ export function RealtimeToggleSection({
 }: RealtimeToggleSectionProperties) {
   const { t: tr } = useTranslation()
   return (
-    <>
+    <View>
       <Text style={styles.sectionTitle}>{tr("settings.realtimeMode")}</Text>
       <View style={styles.autoStartRow}>
         <View>
@@ -26,6 +26,6 @@ export function RealtimeToggleSection({
         </View>
         <Switch value={realtimeMode} onValueChange={onChange} />
       </View>
-    </>
+    </View>
   )
 }

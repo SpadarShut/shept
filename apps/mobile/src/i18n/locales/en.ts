@@ -22,7 +22,7 @@ const en = {
     setupRequired: "To start, set up the following:",
   },
   settings: {
-    apiKeys: "API Keys",
+    apiKeys: "ElevenLabs API Key",
     fieldElevenLabs: "ElevenLabs",
     enterApiKey: "Enter API key",
     getElevenLabsKey: "Get your ElevenLabs API key",

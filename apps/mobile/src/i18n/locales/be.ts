@@ -22,7 +22,7 @@ const be = {
     setupRequired: "Каб пачаць, наладзьце наступнае:",
   },
   settings: {
-    apiKeys: "Ключы API",
+    apiKeys: "Ключ API ElevenLabs",
     fieldElevenLabs: "ElevenLabs",
     enterApiKey: "Увядзіце ключ API",
     getElevenLabsKey: "Атрымаць ключ API ElevenLabs",

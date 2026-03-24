@@ -43,6 +43,7 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 8,
+    flexShrink: 1,
   },
   apiInput: {
     borderWidth: 1,
@@ -96,12 +97,14 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 32,
+
+    flex: 1,
     paddingVertical: 8,
   },
   autoStartDesc: {
     fontSize: 14,
     color: "#666",
     marginTop: 2,
+    flex: 0,
   },
 })

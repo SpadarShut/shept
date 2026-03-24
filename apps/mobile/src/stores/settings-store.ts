@@ -32,6 +32,14 @@ const defaults: SheptSettings = {
   appLanguage: "system",
 }
 
+function saveToNative(json: string) {
+  if (Platform.OS === "android") {
+    try {
+      SheptNative.saveSettings(json)
+    } catch {}
+  }
+}
+
 function persist(state: SheptSettings) {
   const data: SheptSettings = {
     realtimeMode: state.realtimeMode,
@@ -44,11 +52,7 @@ function persist(state: SheptSettings) {
   }
   const json = JSON.stringify(data)
   SecureStore.setItemAsync(STORE_KEY, json).catch(() => {})
-  if (Platform.OS === "android") {
-    try {
-      SheptNative.saveSettings(json)
-    } catch {}
-  }
+  saveToNative(json)
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -59,6 +63,7 @@ export const useSettingsStore = create<SettingsStore>()(
     hydrate: async () => {
       try {
         let raw: string | undefined
+        let fromSecureStore = false
 
         if (Platform.OS === "android") {
           try {
@@ -70,11 +75,13 @@ export const useSettingsStore = create<SettingsStore>()(
 
         if (!raw) {
           raw = (await SecureStore.getItemAsync(STORE_KEY)) ?? undefined
+          if (raw) fromSecureStore = true
         }
 
         if (raw) {
           const parsed = JSON.parse(raw) as Partial<SheptSettings>
           setState({ ...defaults, ...parsed, hydrated: true })
+          if (fromSecureStore) saveToNative(raw)
         } else {
           setState({ hydrated: true })
         }

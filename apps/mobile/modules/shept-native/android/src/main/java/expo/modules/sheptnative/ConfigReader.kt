@@ -1,27 +1,68 @@
 package expo.modules.sheptnative
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import org.json.JSONObject
 
-class ConfigReader(private val context: Context) {
-  private val prefs by lazy {
-    val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-    EncryptedSharedPreferences.create(
-      "shept_settings",
-      masterKeyAlias,
-      context,
-      EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-      EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+class ConfigReader(
+  private val context: Context,
+  prefsOverride: SharedPreferences? = null
+) {
+  companion object {
+    private const val TAG = "ConfigReader"
+    private const val PREFS_NAME = "shept_settings"
+
+    @Volatile
+    private var sharedInstance: SharedPreferences? = null
+
+    fun getSharedPrefs(context: Context): SharedPreferences {
+      sharedInstance?.let { return it }
+      synchronized(this) {
+        sharedInstance?.let { return it }
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        return EncryptedSharedPreferences.create(
+          PREFS_NAME,
+          masterKeyAlias,
+          context.applicationContext,
+          EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+          EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        ).also { sharedInstance = it }
+      }
+    }
+
+  }
+
+  private var prefs: SharedPreferences? = prefsOverride
+
+  private fun getPrefs(): SharedPreferences? {
+    prefs?.let { return it }
+    return try {
+      getSharedPrefs(context).also { prefs = it }
+    } catch (e: Exception) {
+      Log.w(TAG, "EncryptedSharedPreferences corrupted, resetting", e)
+      try { context.deleteSharedPreferences(PREFS_NAME) } catch (_: Exception) {}
+      try {
+        sharedInstance = null
+        getSharedPrefs(context).also { prefs = it }
+      } catch (e2: Exception) {
+        Log.e(TAG, "Failed to recreate EncryptedSharedPreferences", e2)
+        null
+      }
+    }
   }
 
   private fun getJson(): JSONObject? {
-    val raw = prefs.getString("data", null) ?: return null
+    val p = getPrefs() ?: return null
     return try {
+      val raw = p.getString("data", null) ?: return null
       JSONObject(raw)
     } catch (e: Exception) {
+      Log.w(TAG, "Failed to read config", e)
+      try { p.edit().clear().apply() } catch (_: Exception) {}
+      prefs = null
       null
     }
   }

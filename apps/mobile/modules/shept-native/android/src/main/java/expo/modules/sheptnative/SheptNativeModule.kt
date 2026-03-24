@@ -7,8 +7,6 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.text.TextUtils
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -17,14 +15,7 @@ class SheptNativeModule : Module() {
     get() = requireNotNull(appContext.reactContext)
 
   private val prefs by lazy {
-    val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-    EncryptedSharedPreferences.create(
-      "shept_settings",
-      masterKeyAlias,
-      context,
-      EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-      EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    ConfigReader.getSharedPrefs(context)
   }
 
   override fun definition() = ModuleDefinition {
