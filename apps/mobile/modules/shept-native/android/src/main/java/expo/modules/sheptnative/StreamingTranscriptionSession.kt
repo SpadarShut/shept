@@ -13,19 +13,23 @@ class StreamingTranscriptionSession(
 
     private var sttClient: RealtimeSttClient? = null
     private var audioCapture: PcmAudioCapture? = null
+    var onComplete: (() -> Unit)? = null
 
     fun start() {
         val client = RealtimeSttClient(apiKey, language, this)
         sttClient = client
         client.connect()
+        Log.d(TAG, "Streaming session connecting...")
+    }
 
+    override fun onConnected() {
+        val client = sttClient ?: return
         val capture = PcmAudioCapture { chunk ->
             client.sendAudioChunk(chunk)
         }
         audioCapture = capture
         capture.start()
-
-        Log.d(TAG, "Streaming session started")
+        Log.d(TAG, "WebSocket connected, audio capture started")
     }
 
     fun stop() {
@@ -48,17 +52,20 @@ class StreamingTranscriptionSession(
 
     override fun onCommittedTranscript(text: String) {
         AccessibilityBridge.commitPartialText(text)
+        sttClient?.close()
     }
 
     override fun onError(message: String) {
         Log.e(TAG, "STT error: $message")
         audioCapture?.stop()
         AccessibilityBridge.commitPartialText("")
+        onComplete?.invoke()
     }
 
     override fun onSessionEnded() {
         Log.d(TAG, "STT session ended")
         audioCapture = null
         sttClient = null
+        onComplete?.invoke()
     }
 }

@@ -3,6 +3,7 @@ package expo.modules.sheptnative
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import android.os.Bundle
@@ -32,6 +33,16 @@ object AccessibilityBridge {
         }
 
     private val observers = mutableListOf<FocusObserver>()
+
+    /** Returns actual text content, excluding hint/placeholder text. */
+    private fun getNodeContent(node: AccessibilityNodeInfo): String {
+        val text = node.text?.toString() ?: return ""
+        if (Build.VERSION.SDK_INT >= 26) {
+            val hint = node.hintText?.toString()
+            if (hint != null && text == hint) return ""
+        }
+        return text
+    }
 
     // Streaming partial text state
     private var partialStartOffset: Int = 0
@@ -74,11 +85,17 @@ object AccessibilityBridge {
         Log.d(TAG, "Streaming session started at offset $partialStartOffset")
     }
 
-    fun updatePartialText(text: String) {
-        if (partialInjectionDisabled) return
-        val node = focusedNode ?: return
+    fun updatePartialText(text: String): Boolean {
+        if (partialInjectionDisabled) return false
+        val node = focusedNode ?: return false
 
-        val existing = node.text?.toString() ?: ""
+        if (!node.refresh()) {
+            Log.w(TAG, "Focused node stale during streaming, clearing")
+            focusedNode = null
+            return false
+        }
+
+        val existing = getNodeContent(node)
 
         // Safety check: verify last partial still matches
         if (partialLength > 0) {
@@ -88,7 +105,7 @@ object AccessibilityBridge {
             if (currentSlice != lastPartialText) {
                 Log.w(TAG, "Field text changed externally, disabling partial injection")
                 partialInjectionDisabled = true
-                return
+                return false
             }
         }
 
@@ -105,7 +122,7 @@ object AccessibilityBridge {
         if (!node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)) {
             Log.w(TAG, "ACTION_SET_TEXT failed during streaming, disabling partial injection")
             partialInjectionDisabled = true
-            return
+            return false
         }
 
         // Restore cursor position
@@ -118,14 +135,18 @@ object AccessibilityBridge {
 
         partialLength = text.length
         lastPartialText = text
+        return true
     }
 
     fun commitPartialText(finalText: String) {
-        if (partialInjectionDisabled) {
-            // Fall back to injectText for the final text
-            injectText(finalText)
+        val injected = if (partialInjectionDisabled) {
+            false
         } else {
             updatePartialText(finalText)
+        }
+
+        if (!injected && finalText.isNotEmpty()) {
+            injectText(finalText)
         }
         // Reset streaming state
         partialStartOffset = 0
@@ -166,7 +187,7 @@ object AccessibilityBridge {
         if (pasteResult) return true
 
         // Fallback: ACTION_SET_TEXT with manual cursor-position merge
-        val existing = node.text?.toString() ?: ""
+        val existing = getNodeContent(node)
         val selStart = node.textSelectionStart.coerceIn(0, existing.length)
         val selEnd = node.textSelectionEnd.coerceIn(selStart, existing.length)
         val merged = existing.substring(0, selStart) + text + existing.substring(selEnd)

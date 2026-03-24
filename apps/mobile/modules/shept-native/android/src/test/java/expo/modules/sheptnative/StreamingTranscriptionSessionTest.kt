@@ -2,6 +2,7 @@ package expo.modules.sheptnative
 
 import io.mockk.*
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,8 +55,8 @@ class StreamingTranscriptionSessionTest {
         every { anyConstructed<PcmAudioCapture>().start() } just Runs
         every { anyConstructed<PcmAudioCapture>().stop() } just Runs
 
-        // Stub AccessibilityBridge streaming methods (don't exist yet)
-        every { AccessibilityBridge.updatePartialText(any()) } just Runs
+        // Stub AccessibilityBridge streaming methods
+        every { AccessibilityBridge.updatePartialText(any()) } returns true
         every { AccessibilityBridge.commitPartialText(any()) } just Runs
     }
 
@@ -69,11 +70,21 @@ class StreamingTranscriptionSessionTest {
     // ── 1. start connects and starts capture ──────────────────────────────────
 
     @Test
-    fun `start connects RealtimeSttClient and starts PcmAudioCapture`() {
+    fun `start connects RealtimeSttClient but does not start PcmAudioCapture`() {
         val session = StreamingTranscriptionSession(apiKey, language)
         session.start()
 
         verify(exactly = 1) { anyConstructed<RealtimeSttClient>().connect() }
+        verify(exactly = 0) { anyConstructed<PcmAudioCapture>().start() }
+    }
+
+    @Test
+    fun `onConnected starts PcmAudioCapture`() {
+        val session = StreamingTranscriptionSession(apiKey, language)
+        session.start()
+
+        (session as RealtimeSttListener).onConnected()
+
         verify(exactly = 1) { anyConstructed<PcmAudioCapture>().start() }
     }
 
@@ -106,6 +117,7 @@ class StreamingTranscriptionSessionTest {
     fun `stop stops PcmAudioCapture and calls RealtimeSttClient commitAndClose`() {
         val session = StreamingTranscriptionSession(apiKey, language)
         session.start()
+        (session as RealtimeSttListener).onConnected()
         session.stop()
 
         verify(exactly = 1) { anyConstructed<PcmAudioCapture>().stop() }
@@ -118,6 +130,7 @@ class StreamingTranscriptionSessionTest {
     fun `cancel stops PcmAudioCapture and cancels RealtimeSttClient`() {
         val session = StreamingTranscriptionSession(apiKey, language)
         session.start()
+        (session as RealtimeSttListener).onConnected()
         session.cancel()
 
         verify(exactly = 1) { anyConstructed<PcmAudioCapture>().stop() }
@@ -156,6 +169,7 @@ class StreamingTranscriptionSessionTest {
     fun `error stops capture and calls commitPartialText with empty string`() {
         val session = StreamingTranscriptionSession(apiKey, language)
         session.start()
+        (session as RealtimeSttListener).onConnected()
 
         (session as RealtimeSttListener).onError("Connection failed")
 
@@ -171,5 +185,31 @@ class StreamingTranscriptionSessionTest {
         session.start()
         session.cancel()
         // No exception = pass
+    }
+
+    // ── 9. onComplete callbacks ─────────────────────────────────────────────
+
+    @Test
+    fun `onSessionEnded fires onComplete callback`() {
+        val session = StreamingTranscriptionSession(apiKey, language)
+        var completed = false
+        session.onComplete = { completed = true }
+        session.start()
+
+        (session as RealtimeSttListener).onSessionEnded()
+
+        assertTrue("onComplete should have been called", completed)
+    }
+
+    @Test
+    fun `onError fires onComplete callback`() {
+        val session = StreamingTranscriptionSession(apiKey, language)
+        var completed = false
+        session.onComplete = { completed = true }
+        session.start()
+
+        (session as RealtimeSttListener).onError("test error")
+
+        assertTrue("onComplete should have been called", completed)
     }
 }

@@ -32,13 +32,12 @@ class AccessibilityBridgeStreamingTest {
     fun `beginStreamingSession snapshots cursor position from focusedNode`() {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 7
+        every { node.refresh() } returns true
         AccessibilityBridge.focusedNode = node
 
         AccessibilityBridge.beginStreamingSession()
 
-        // Verify by calling updatePartialText and checking the SET_TEXT target starts at offset 7.
-        // The field text at [7, 7] is empty string which matches lastPartialText="", so no disable.
-        every { node.text } returns "prefix "  // length 7, so [7,7] == ""
+        every { node.text } returns "prefix "
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
 
@@ -57,7 +56,6 @@ class AccessibilityBridgeStreamingTest {
     @Test
     fun `beginStreamingSession with no focused node does not crash`() {
         AccessibilityBridge.focusedNode = null
-        // Must not throw
         AccessibilityBridge.beginStreamingSession()
     }
 
@@ -66,6 +64,7 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns -1
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
@@ -85,26 +84,24 @@ class AccessibilityBridgeStreamingTest {
 
     @Test
     fun `beginStreamingSession resets tracking state`() {
-        // Arrange: simulate a dirty streaming state left over from a previous session
-        // by running a session, then beginning a new one and confirming clean state.
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
 
-        // First session — inject something so state is dirty
         AccessibilityBridge.beginStreamingSession()
         AccessibilityBridge.updatePartialText("old")
 
-        // Second session — fresh node at cursor 0 with empty text
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
         AccessibilityBridge.beginStreamingSession()
 
         clearMocks(node, answers = false, recordedCalls = true, verificationMarks = true)
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
 
@@ -127,13 +124,15 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
 
         AccessibilityBridge.beginStreamingSession()
-        AccessibilityBridge.updatePartialText("hello")
+        val result = AccessibilityBridge.updatePartialText("hello")
 
+        assertTrue(result)
         val slot = slot<Bundle>()
         verify { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, capture(slot)) }
         assertEquals(
@@ -145,23 +144,47 @@ class AccessibilityBridgeStreamingTest {
     }
 
     @Test
+    fun `updatePartialText returns false when focusedNode is null`() {
+        AccessibilityBridge.focusedNode = null
+        AccessibilityBridge.beginStreamingSession()
+
+        val result = AccessibilityBridge.updatePartialText("hello")
+
+        assertFalse(result)
+    }
+
+    @Test
+    fun `updatePartialText returns false when refresh fails`() {
+        val node = mockk<AccessibilityNodeInfo>(relaxed = true)
+        every { node.textSelectionEnd } returns 0
+        every { node.refresh() } returns false
+        AccessibilityBridge.focusedNode = node
+
+        AccessibilityBridge.beginStreamingSession()
+        val result = AccessibilityBridge.updatePartialText("hello")
+
+        assertFalse(result)
+        verify(exactly = 0) { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) }
+    }
+
+    @Test
     fun `updatePartialText second call replaces first partial not appends`() {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
 
         AccessibilityBridge.beginStreamingSession()
 
-        // After first call the field contains "hel" at [0,3]
         every { node.text } returns ""
         AccessibilityBridge.updatePartialText("hel")
 
-        // Simulate the field now holds "hel" (what the impl wrote)
         every { node.text } returns "hel"
 
         clearMocks(node, answers = false, recordedCalls = true, verificationMarks = true)
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         every { node.text } returns "hel"
@@ -170,7 +193,6 @@ class AccessibilityBridgeStreamingTest {
 
         val slot = slot<Bundle>()
         verify { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, capture(slot)) }
-        // "hel" is replaced by "hello", not appended → result is "hello" not "helhello"
         assertEquals(
             "hello",
             slot.captured.getCharSequence(
@@ -184,6 +206,7 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 6
         every { node.text } returns "prefix"
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
@@ -193,7 +216,6 @@ class AccessibilityBridgeStreamingTest {
 
         val slot = slot<Bundle>()
         verify { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, capture(slot)) }
-        // cursor should be at 6 + 5 = 11
         assertEquals(11, slot.captured.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT))
         assertEquals(11, slot.captured.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT))
     }
@@ -202,33 +224,27 @@ class AccessibilityBridgeStreamingTest {
     fun `updatePartialText safety check disables injection when user modified field`() {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
 
         AccessibilityBridge.beginStreamingSession()
 
-        // First update: partial "hi" written at [0,2]
         every { node.text } returns ""
         AccessibilityBridge.updatePartialText("hi")
 
-        // User typed extra chars — field now reads "hi there" instead of "hi"
         every { node.text } returns "hi there"
 
         clearMocks(node, answers = false, recordedCalls = true, verificationMarks = true)
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
-        every { node.text } returns "hi there"
-
-        // Safety check should detect mismatch at [0,2] ("hi" vs "hi") — wait, "hi" does match
-        // but the full slice [0, partialLength=2] of "hi there" is "hi" which matches lastPartialText="hi".
-        // So the mismatch case: simulate partialLength=2, field text[0..2]="HI" (case change)
-        // Let's redo: first partial is "hi", user changes it to "HI there"
         every { node.text } returns "HI there"
 
-        AccessibilityBridge.updatePartialText("hello")
+        val result = AccessibilityBridge.updatePartialText("hello")
 
-        // ACTION_SET_TEXT must NOT be called — injection is disabled
+        assertFalse(result)
         verify(exactly = 0) { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) }
     }
 
@@ -237,6 +253,7 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns false
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
@@ -244,7 +261,6 @@ class AccessibilityBridgeStreamingTest {
         AccessibilityBridge.beginStreamingSession()
         AccessibilityBridge.updatePartialText("hello")
 
-        // Second call — partialInjectionDisabled should now be true → no ACTION_SET_TEXT again
         clearMocks(node, answers = false, recordedCalls = true, verificationMarks = true)
         every { node.text } returns ""
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns false
@@ -259,12 +275,12 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
-        // Fail on first call to trigger the disable
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns false
         AccessibilityBridge.focusedNode = node
 
         AccessibilityBridge.beginStreamingSession()
-        AccessibilityBridge.updatePartialText("hello")  // this disables partial injection
+        AccessibilityBridge.updatePartialText("hello")
 
         clearMocks(node, answers = false, recordedCalls = true, verificationMarks = true)
         every { node.text } returns ""
@@ -276,6 +292,31 @@ class AccessibilityBridgeStreamingTest {
         verify(exactly = 0) { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) }
     }
 
+    @Test
+    fun `updatePartialText ignores hint text treating field as empty`() {
+        val node = mockk<AccessibilityNodeInfo>(relaxed = true)
+        every { node.textSelectionEnd } returns 0
+        every { node.text } returns "Type a message"
+        every { node.hintText } returns "Type a message"
+        every { node.refresh() } returns true
+        every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
+        every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
+        AccessibilityBridge.focusedNode = node
+
+        AccessibilityBridge.beginStreamingSession()
+        val result = AccessibilityBridge.updatePartialText("hello")
+
+        assertTrue(result)
+        val slot = slot<Bundle>()
+        verify { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, capture(slot)) }
+        assertEquals(
+            "hello",
+            slot.captured.getCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE
+            ).toString()
+        )
+    }
+
     // ─── commitPartialText ────────────────────────────────────────────────────
 
     @Test
@@ -283,6 +324,7 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
@@ -301,29 +343,67 @@ class AccessibilityBridgeStreamingTest {
     }
 
     @Test
+    fun `commitPartialText falls back to injectText when updatePartialText returns false`() {
+        val node = mockk<AccessibilityNodeInfo>(relaxed = true)
+        every { node.textSelectionEnd } returns 0
+        every { node.text } returns ""
+        every { node.refresh() } returns true
+        every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
+        every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
+        AccessibilityBridge.focusedNode = node
+
+        AccessibilityBridge.beginStreamingSession()
+
+        // Simulate node becoming null mid-session
+        AccessibilityBridge.focusedNode = null
+
+        // Set a new node for injectText fallback
+        val newNode = mockk<AccessibilityNodeInfo>(relaxed = true)
+        every { newNode.refresh() } returns true
+        every { newNode.text } returns ""
+        every { newNode.textSelectionStart } returns 0
+        every { newNode.textSelectionEnd } returns 0
+        every { newNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
+        every { newNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
+        AccessibilityBridge.focusedNode = newNode
+
+        AccessibilityBridge.commitPartialText("final text")
+
+        // injectText calls node.refresh() — distinguishes from updatePartialText path
+        verify { newNode.refresh() }
+        val slot = slot<Bundle>()
+        verify { newNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, capture(slot)) }
+        assertEquals(
+            "final text",
+            slot.captured.getCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE
+            ).toString()
+        )
+    }
+
+    @Test
     fun `commitPartialText resets tracking state so next session starts clean`() {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
 
         AccessibilityBridge.beginStreamingSession()
         AccessibilityBridge.updatePartialText("partial")
-        // Now field holds "partial" at [0,7]
 
         every { node.text } returns "partial"
         AccessibilityBridge.commitPartialText("partial final")
 
-        // After commit, state is reset. A new beginStreamingSession + updatePartialText should
-        // behave as if starting fresh (partialLength=0, lastPartialText="").
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
         AccessibilityBridge.beginStreamingSession()
 
         clearMocks(node, answers = false, recordedCalls = true, verificationMarks = true)
         every { node.text } returns ""
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
 
@@ -331,7 +411,6 @@ class AccessibilityBridgeStreamingTest {
 
         val slot = slot<Bundle>()
         verify { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, capture(slot)) }
-        // partialStartOffset=0, partialLength=0 after reset on empty field → just the new text
         assertEquals(
             "new partial",
             slot.captured.getCharSequence(
@@ -345,13 +424,9 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 0
         every { node.text } returns ""
-        // Fail ACTION_SET_TEXT to trigger disable
-        every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns false
         every { node.refresh() } returns true
+        every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns false
         AccessibilityBridge.focusedNode = node
-        // No clipboardContext → injectText will also use ACTION_SET_TEXT (paste path skipped),
-        // but what we verify is that injectText() is attempted (i.e. it calls refresh() which
-        // is part of injectText's normal path, unlike updatePartialText which does not call refresh).
 
         AccessibilityBridge.beginStreamingSession()
         AccessibilityBridge.updatePartialText("hi")  // fails → partialInjectionDisabled = true
@@ -366,7 +441,6 @@ class AccessibilityBridgeStreamingTest {
 
         AccessibilityBridge.commitPartialText("final")
 
-        // injectText calls node.refresh() — verify it was invoked (distinguishes injectText path)
         verify { node.refresh() }
     }
 
@@ -375,6 +449,7 @@ class AccessibilityBridgeStreamingTest {
         val node = mockk<AccessibilityNodeInfo>(relaxed = true)
         every { node.textSelectionEnd } returns 3
         every { node.text } returns "hi "
+        every { node.refresh() } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, any()) } returns true
         every { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, any()) } returns true
         AccessibilityBridge.focusedNode = node
@@ -384,7 +459,6 @@ class AccessibilityBridgeStreamingTest {
 
         val slot = slot<Bundle>()
         verify { node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, capture(slot)) }
-        // cursor at 3 + 5 = 8
         assertEquals(8, slot.captured.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT))
         assertEquals(8, slot.captured.getInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT))
     }

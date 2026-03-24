@@ -73,7 +73,7 @@ class RealtimeSttClientTest {
 
     private fun sendMessage(type: String, extras: Map<String, String> = emptyMap()) {
         val json = JSONObject().apply {
-            put("type", type)
+            put("message_type", type)
             extras.forEach { (k, v) -> put(k, v) }
         }
         wsListener.onMessage(mockWebSocket, json.toString())
@@ -110,14 +110,6 @@ class RealtimeSttClientTest {
     }
 
     @Test
-    fun `session_ended message calls onSessionEnded`() {
-        sendMessage("session.ended")
-        drainMain()
-
-        verify(exactly = 1) { listener.onSessionEnded() }
-    }
-
-    @Test
     fun `WebSocket failure calls onError with throwable message`() {
         val error = RuntimeException("connection refused")
         wsListener.onFailure(mockWebSocket, error, null)
@@ -144,14 +136,14 @@ class RealtimeSttClientTest {
     }
 
     @Test
-    fun `WebSocket closed after session_ended does not double-call onSessionEnded`() {
-        sendMessage("session.ended")
-        drainMain()
-
+    fun `WebSocket closed twice does not double-call onSessionEnded`() {
         wsListener.onClosed(mockWebSocket, 1000, "normal")
         drainMain()
 
-        // onSessionEnded must be called exactly once total
+        // Second close should not fire again (sessionEnded guard in onClosed)
+        wsListener.onClosed(mockWebSocket, 1000, "normal")
+        drainMain()
+
         verify(exactly = 1) { listener.onSessionEnded() }
     }
 
@@ -164,24 +156,34 @@ class RealtimeSttClientTest {
         verify { mockWebSocket.send(capture(slot)) }
 
         val json = JSONObject(slot.captured)
-        assertEquals("input_audio_chunk", json.getString("type"))
+        assertEquals("input_audio_chunk", json.getString("message_type"))
+        assertEquals(false, json.getBoolean("commit"))
+        assertEquals(16000, json.getInt("sample_rate"))
 
         val expectedBase64 = java.util.Base64.getEncoder().encodeToString(pcm)
-        assertEquals(expectedBase64, json.getString("audio"))
+        assertEquals(expectedBase64, json.getString("audio_base_64"))
     }
 
     @Test
-    fun `commitAndClose sends commit then end_of_stream messages`() {
+    fun `commitAndClose sends single commit chunk`() {
         client.commitAndClose()
 
-        val messages = mutableListOf<String>()
-        verify { mockWebSocket.send(capture(messages)) }
+        val slot = slot<String>()
+        verify(exactly = 1) { mockWebSocket.send(capture(slot)) }
 
-        val types = messages.map { JSONObject(it).getString("type") }
-        assertTrue("commit must be sent", "commit" in types)
-        assertTrue("end_of_stream must be sent", "end_of_stream" in types)
-        assertEquals("commit", types[0])
-        assertEquals("end_of_stream", types[1])
+        val json = JSONObject(slot.captured)
+        assertEquals("input_audio_chunk", json.getString("message_type"))
+        assertEquals(true, json.getBoolean("commit"))
+        assertEquals(16000, json.getInt("sample_rate"))
+    }
+
+    @Test
+    fun `onOpen calls listener onConnected`() {
+        val mockResponse = mockk<Response>(relaxed = true)
+        wsListener.onOpen(mockWebSocket, mockResponse)
+        drainMain()
+
+        verify(exactly = 1) { listener.onConnected() }
     }
 
     @Test

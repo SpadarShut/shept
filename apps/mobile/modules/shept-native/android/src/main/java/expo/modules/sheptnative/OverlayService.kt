@@ -352,16 +352,31 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
         applyTranscribingStyle()
         currentStatus = "transcribing"
 
-        streamingSession?.stop()
-        streamingSession = null
+        val session = streamingSession
+        if (session == null) {
+            applyIdleStyle()
+            currentStatus = "idle"
+            return
+        }
 
-        // Return to idle after a short delay (committed_transcript callback handles text injection)
-        mainHandler.postDelayed({
-            if (currentStatus == "transcribing") {
+        session.onComplete = {
+            mainHandler.post {
+                streamingSession = null
                 applyIdleStyle()
                 currentStatus = "idle"
             }
-        }, 3000)
+        }
+        session.stop()
+
+        // Safety timeout: force cleanup if session doesn't complete
+        mainHandler.postDelayed({
+            if (currentStatus == "transcribing") {
+                streamingSession?.cancel()
+                streamingSession = null
+                applyIdleStyle()
+                currentStatus = "idle"
+            }
+        }, 5000)
 
         Log.d(TAG, "Realtime recording stopped, waiting for final transcript")
     }

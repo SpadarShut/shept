@@ -13,6 +13,7 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 interface RealtimeSttListener {
+    fun onConnected()
     fun onPartialTranscript(text: String)
     fun onCommittedTranscript(text: String)
     fun onError(message: String)
@@ -26,7 +27,7 @@ class RealtimeSttClient(
 ) {
     companion object {
         private const val TAG = "RealtimeSttClient"
-        private const val URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime"
+        private const val URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&encoding=pcm_s16le&sample_rate=16000"
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -47,12 +48,13 @@ class RealtimeSttClient(
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
                 Log.d(TAG, "WebSocket connected")
+                mainHandler.post { listener.onConnected() }
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
                 try {
                     val json = JSONObject(text)
-                    when (val type = json.optString("type")) {
+                    when (val type = json.optString("message_type")) {
                         "partial_transcript" -> {
                             val partial = json.optString("text", "")
                             if (partial.isNotEmpty()) {
@@ -62,10 +64,6 @@ class RealtimeSttClient(
                         "committed_transcript" -> {
                             val committed = json.optString("text", "")
                             mainHandler.post { listener.onCommittedTranscript(committed) }
-                        }
-                        "session.ended" -> {
-                            sessionEnded = true
-                            mainHandler.post { listener.onSessionEnded() }
                         }
                         else -> Log.d(TAG, "Unhandled message type: $type")
                     }
@@ -92,16 +90,28 @@ class RealtimeSttClient(
     fun sendAudioChunk(pcm: ByteArray) {
         val encoded = Base64.encodeToString(pcm, Base64.NO_WRAP)
         val msg = JSONObject().apply {
-            put("type", "input_audio_chunk")
-            put("audio", encoded)
+            put("message_type", "input_audio_chunk")
+            put("audio_base_64", encoded)
+            put("commit", false)
+            put("sample_rate", 16000)
         }
         webSocket?.send(msg.toString())
     }
 
     fun commitAndClose() {
-        webSocket?.send(JSONObject().apply { put("type", "commit") }.toString())
-        webSocket?.send(JSONObject().apply { put("type", "end_of_stream") }.toString())
-        Log.d(TAG, "Sent commit + end_of_stream")
+        val msg = JSONObject().apply {
+            put("message_type", "input_audio_chunk")
+            put("audio_base_64", "")
+            put("commit", true)
+            put("sample_rate", 16000)
+        }
+        webSocket?.send(msg.toString())
+        Log.d(TAG, "Sent commit chunk")
+    }
+
+    fun close() {
+        webSocket?.close(1000, "done")
+        webSocket = null
     }
 
     fun cancel() {
