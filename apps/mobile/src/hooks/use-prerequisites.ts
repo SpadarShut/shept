@@ -13,8 +13,6 @@ export type PrerequisiteStatus = {
 
 type PrerequisiteInput = {
   elevenLabsApiKey: string
-  googleCloudApiKey: string
-  sttProvider: "elevenlabs" | "google"
 }
 
 const ALL_GRANTED: PrerequisiteStatus = {
@@ -41,10 +39,7 @@ async function checkAndroidPermissions(
     )
   } catch {}
 
-  const apiKey =
-    input.sttProvider === "elevenlabs"
-      ? input.elevenLabsApiKey.length > 0
-      : input.googleCloudApiKey.length > 0
+  const apiKey = input.elevenLabsApiKey.length > 0
 
   return { overlay, accessibility, microphone, notification, apiKey }
 }
@@ -66,7 +61,7 @@ export function usePrerequisites(input: PrerequisiteInput) {
       return
     }
     setStatus(await checkAndroidPermissions(input))
-  }, [input.elevenLabsApiKey, input.googleCloudApiKey, input.sttProvider])
+  }, [input.elevenLabsApiKey])
 
   useEffect(() => {
     check()

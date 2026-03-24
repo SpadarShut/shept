@@ -54,6 +54,8 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     private var micButton: ImageView? = null
     private var loadingSpinner: ProgressBar? = null
 
+    private var streamingSession: StreamingTranscriptionSession? = null
+
     private var snoozed = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private lateinit var configReader: ConfigReader
@@ -96,6 +98,8 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
         snoozeRunnable?.let { mainHandler.removeCallbacks(it) }
         fadeAnimator?.cancel()
         edgeSnapAnimator?.cancel()
+        streamingSession?.cancel()
+        streamingSession = null
         if (currentStatus == "recording") {
             stopRecording()
         }
@@ -289,74 +293,126 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
     }
 
     private fun onButtonTap() {
+        val realtimeMode = configReader.getRealtimeMode()
         when (currentStatus) {
             "idle" -> {
-                startRecording()
+                if (realtimeMode) {
+                    startRealtimeRecording()
+                } else {
+                    startRecording()
+                }
             }
             "recording" -> {
-                stopRecording()
-                applyTranscribingStyle()
-                currentStatus = "transcribing"
-                val file = outputFile
-                if (file == null || !file.exists()) {
-                    Log.e(TAG, "No recording file available for STT")
-                    applyIdleStyle()
-                    currentStatus = "idle"
-                    return
+                if (realtimeMode) {
+                    stopRealtimeRecording()
+                } else {
+                    stopBatchRecording()
                 }
-                Thread {
-                    try {
-                        val provider = configReader.getProvider()
-                        val apiKey = configReader.getApiKey()
-                        val language = configReader.getPrimaryLanguage().ifEmpty { "en" }
-                        if (apiKey.isEmpty()) {
-                            throw SttException("No API key configured", 0)
-                        }
-                        Log.d(TAG, "Starting STT: provider=$provider, language=$language")
-                        val text = SttClient.transcribe(file, provider, apiKey, language)
-                        Log.d(TAG, "STT result: $text")
-                        lastTranscription = text
-                        if (text.isNotEmpty()) {
-                            val injected = AccessibilityBridge.injectText(text)
-                            if (!injected) {
-                                Log.w(TAG, "No focused input to inject text into")
-                            }
-                            Log.d(TAG, "Text injection result: $injected")
-                        }
-                    } catch (e: SttException) {
-                        Log.e(TAG, "STT failed", e)
-                        val errorMsg = when {
-                            e.httpCode == 401 -> "Error: Invalid API key"
-                            e.httpCode == 429 -> "Error: Rate limit exceeded"
-                            e.message?.contains("No network") == true -> "Error: No network connection"
-                            else -> "Error: ${e.message}"
-                        }
-                        lastTranscription = errorMsg
-                        mainHandler.post {
-                            Toast.makeText(this@OverlayService, errorMsg, Toast.LENGTH_SHORT).show()
-                            flashError()
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "STT failed", e)
-                        lastTranscription = "Error: ${e.message}"
-                        mainHandler.post {
-                            Toast.makeText(this@OverlayService, lastTranscription, Toast.LENGTH_SHORT).show()
-                            flashError()
-                        }
-                    } finally {
-                        try {
-                            file.delete()
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Failed to delete recording file", e)
-                        }
-                        overlayView?.post {
-                            applyIdleStyle()
-                            currentStatus = "idle"
-                        }
-                    }
-                }.start()
             }
         }
+    }
+
+    private fun startRealtimeRecording() {
+        val apiKey = configReader.getApiKey()
+        val language = configReader.getPrimaryLanguage().ifEmpty { "en" }
+        if (apiKey.isEmpty()) {
+            Log.e(TAG, "No API key configured for realtime STT")
+            mainHandler.post {
+                Toast.makeText(this, "Error: No API key configured", Toast.LENGTH_SHORT).show()
+                flashError()
+            }
+            return
+        }
+
+        AccessibilityBridge.beginStreamingSession()
+        val session = StreamingTranscriptionSession(apiKey, language)
+        streamingSession = session
+        session.start()
+
+        currentStatus = "recording"
+        applyRecordingStyle()
+        Log.d(TAG, "Realtime recording started")
+    }
+
+    private fun stopRealtimeRecording() {
+        applyTranscribingStyle()
+        currentStatus = "transcribing"
+
+        streamingSession?.stop()
+        streamingSession = null
+
+        // Return to idle after a short delay (committed_transcript callback handles text injection)
+        mainHandler.postDelayed({
+            if (currentStatus == "transcribing") {
+                applyIdleStyle()
+                currentStatus = "idle"
+            }
+        }, 3000)
+
+        Log.d(TAG, "Realtime recording stopped, waiting for final transcript")
+    }
+
+    private fun stopBatchRecording() {
+        stopRecording()
+        applyTranscribingStyle()
+        currentStatus = "transcribing"
+        val file = outputFile
+        if (file == null || !file.exists()) {
+            Log.e(TAG, "No recording file available for STT")
+            applyIdleStyle()
+            currentStatus = "idle"
+            return
+        }
+        Thread {
+            try {
+                val apiKey = configReader.getApiKey()
+                val language = configReader.getPrimaryLanguage().ifEmpty { "en" }
+                if (apiKey.isEmpty()) {
+                    throw SttException("No API key configured", 0)
+                }
+                Log.d(TAG, "Starting batch STT: language=$language")
+                val text = SttClient.transcribe(file, apiKey, language)
+                Log.d(TAG, "STT result: $text")
+                lastTranscription = text
+                if (text.isNotEmpty()) {
+                    val injected = AccessibilityBridge.injectText(text)
+                    if (!injected) {
+                        Log.w(TAG, "No focused input to inject text into")
+                    }
+                    Log.d(TAG, "Text injection result: $injected")
+                }
+            } catch (e: SttException) {
+                Log.e(TAG, "STT failed", e)
+                val errorMsg = when {
+                    e.httpCode == 401 -> "Error: Invalid API key"
+                    e.httpCode == 429 -> "Error: Rate limit exceeded"
+                    e.message?.contains("No network") == true -> "Error: No network connection"
+                    else -> "Error: ${e.message}"
+                }
+                lastTranscription = errorMsg
+                mainHandler.post {
+                    Toast.makeText(this@OverlayService, errorMsg, Toast.LENGTH_SHORT).show()
+                    flashError()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "STT failed", e)
+                lastTranscription = "Error: ${e.message}"
+                mainHandler.post {
+                    Toast.makeText(this@OverlayService, lastTranscription, Toast.LENGTH_SHORT).show()
+                    flashError()
+                }
+            } finally {
+                try {
+                    file.delete()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to delete recording file", e)
+                }
+                overlayView?.post {
+                    applyIdleStyle()
+                    currentStatus = "idle"
+                }
+            }
+        }.start()
     }
 
     private fun flashError() {

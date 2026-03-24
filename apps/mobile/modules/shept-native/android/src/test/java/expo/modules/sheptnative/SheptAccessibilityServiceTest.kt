@@ -87,6 +87,13 @@ class SheptAccessibilityServiceTest {
             every { it.packageName } returns pkg
         }
 
+    private fun textChangedEvent(node: AccessibilityNodeInfo, pkg: String = "com.example"): AccessibilityEvent =
+        mockk<AccessibilityEvent>(relaxed = true).also {
+            every { it.eventType } returns AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED
+            every { it.source } returns node
+            every { it.packageName } returns pkg
+        }
+
     private fun windowStateChangedEvent(pkg: String = "com.example"): AccessibilityEvent =
         mockk<AccessibilityEvent>(relaxed = true).also {
             every { it.eventType } returns AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
@@ -207,5 +214,37 @@ class SheptAccessibilityServiceTest {
         advanceLooperBy(700)
 
         assertEquals("No hide expected for valid node", 0, focusEvents.count { !it.first })
+    }
+
+    // ── isStreaming guard ─────────────────────────────────────────────────────
+
+    @Test
+    fun `TYPE_VIEW_TEXT_CHANGED during streaming does not update focusedNode`() {
+        val node = textFieldNode()
+        service.onAccessibilityEvent(focusedEvent(node))
+
+        // Enable streaming guard
+        AccessibilityBridge.isStreaming = true
+
+        val anotherNode = textFieldNode()
+        service.onAccessibilityEvent(textChangedEvent(anotherNode))
+
+        // focusedNode should NOT have been replaced with anotherNode
+        assertEquals("focusedNode must not change during streaming", node, AccessibilityBridge.focusedNode)
+
+        AccessibilityBridge.isStreaming = false
+    }
+
+    @Test
+    fun `TYPE_VIEW_TEXT_CHANGED outside streaming updates focusedNode normally`() {
+        val node = textFieldNode()
+        service.onAccessibilityEvent(focusedEvent(node))
+
+        AccessibilityBridge.isStreaming = false
+
+        val anotherNode = textFieldNode()
+        service.onAccessibilityEvent(textChangedEvent(anotherNode))
+
+        assertEquals("focusedNode should update outside streaming", anotherNode, AccessibilityBridge.focusedNode)
     }
 }

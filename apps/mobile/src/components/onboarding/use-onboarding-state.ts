@@ -92,7 +92,6 @@ export function useOnboardingState(): OnboardingState {
     setMany({
       languages: selectedLanguages,
       primaryLanguage: selectedLanguages[0] ?? "",
-      sttProvider: "elevenlabs",
       elevenLabsApiKey: elevenLabsKey,
       onboardingComplete: true,
       autoStart: true,

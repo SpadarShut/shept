@@ -35,8 +35,6 @@ describe("usePrerequisites", () => {
     const { result } = renderHook(() =>
       usePrerequisites({
         elevenLabsApiKey: "key123",
-        googleCloudApiKey: "",
-        sttProvider: "elevenlabs",
       }),
     )
     await act(async () => {})
@@ -56,8 +54,6 @@ describe("usePrerequisites", () => {
     const { result } = renderHook(() =>
       usePrerequisites({
         elevenLabsApiKey: "key",
-        googleCloudApiKey: "",
-        sttProvider: "elevenlabs",
       }),
     )
     await act(async () => {})
@@ -72,8 +68,6 @@ describe("usePrerequisites", () => {
     const { result } = renderHook(() =>
       usePrerequisites({
         elevenLabsApiKey: "",
-        googleCloudApiKey: "",
-        sttProvider: "elevenlabs",
       }),
     )
     await act(async () => {})

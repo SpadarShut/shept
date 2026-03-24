@@ -6,9 +6,8 @@ import SheptNative from "../../modules/shept-native"
 const STORE_KEY = "shept-settings"
 
 export interface SheptSettings {
-  sttProvider: "elevenlabs" | "google"
+  realtimeMode: boolean
   elevenLabsApiKey: string
-  googleCloudApiKey: string
   languages: string[]
   primaryLanguage: string
   autoStart: boolean
@@ -24,9 +23,8 @@ interface SettingsStore extends SheptSettings {
 }
 
 const defaults: SheptSettings = {
-  sttProvider: "elevenlabs",
+  realtimeMode: true,
   elevenLabsApiKey: "",
-  googleCloudApiKey: "",
   languages: [],
   primaryLanguage: "",
   autoStart: true,
@@ -36,9 +34,8 @@ const defaults: SheptSettings = {
 
 function persist(state: SheptSettings) {
   const data: SheptSettings = {
-    sttProvider: state.sttProvider,
+    realtimeMode: state.realtimeMode,
     elevenLabsApiKey: state.elevenLabsApiKey,
-    googleCloudApiKey: state.googleCloudApiKey,
     languages: state.languages,
     primaryLanguage: state.primaryLanguage,
     autoStart: state.autoStart,

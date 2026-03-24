@@ -22,7 +22,6 @@ const en = {
     setupRequired: "To start, set up the following:",
   },
   settings: {
-    provider: "Provider",
     apiKeys: "API Keys",
     fieldElevenLabs: "ElevenLabs",
     enterApiKey: "Enter API key",
@@ -31,6 +30,10 @@ const en = {
     searchLanguages: "Search languages...",
     autoStart: "Auto-start",
     autoStartDesc: "Start overlay on app launch",
+    realtimeMode: "Transcription Mode",
+    realtimeModeLabel: "Realtime streaming",
+    realtimeModeDesc:
+      "Stream text as you speak instead of transcribing after recording",
     appLanguage: "App Language",
     appLanguageSystem: "System default",
     appLanguageEnglish: "English",

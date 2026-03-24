@@ -102,6 +102,7 @@ open class SheptAccessibilityService : AccessibilityService() {
                 }
             }
             AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
+                if (AccessibilityBridge.isStreaming) return
                 val source = event.source ?: return
                 if (isTextField(source)) {
                     AccessibilityBridge.focusedNode = source

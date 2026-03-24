@@ -1,6 +1,6 @@
 import { ScrollView, KeyboardAvoidingView, Platform } from "react-native"
 import { useSettingsStore } from "../src/stores/settings-store"
-import { ProviderSection } from "../src/components/settings/provider-section"
+import { RealtimeToggleSection } from "../src/components/settings/provider-section"
 import { ApiKeysSection } from "../src/components/settings/api-keys-section"
 import { LanguagesSection } from "../src/components/settings/languages-section"
 import { AutoStartSection } from "../src/components/settings/auto-start-section"
@@ -14,7 +14,7 @@ function resolvePrimaryLanguage(next: string[], current: string): string {
 }
 
 export default function SettingsScreen() {
-  const sttProvider = useSettingsStore((state) => state.sttProvider)
+  const realtimeMode = useSettingsStore((state) => state.realtimeMode)
   const elevenLabsApiKey = useSettingsStore((state) => state.elevenLabsApiKey)
   const languages = useSettingsStore((state) => state.languages)
   const primaryLanguage = useSettingsStore((state) => state.primaryLanguage)
@@ -40,9 +40,9 @@ export default function SettingsScreen() {
         style={styles.container}
         contentContainerStyle={styles.content}
       >
-        <ProviderSection
-          sttProvider={sttProvider}
-          onSelect={(provider) => set("sttProvider", provider)}
+        <RealtimeToggleSection
+          realtimeMode={realtimeMode}
+          onChange={(value) => set("realtimeMode", value)}
         />
         <ApiKeysSection
           elevenLabsApiKey={elevenLabsApiKey}

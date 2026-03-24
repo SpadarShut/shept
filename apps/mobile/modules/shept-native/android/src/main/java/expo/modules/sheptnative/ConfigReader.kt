@@ -26,18 +26,8 @@ class ConfigReader(private val context: Context) {
     }
   }
 
-  fun getProvider(): String {
-    return getJson()?.optString("sttProvider", "elevenlabs") ?: "elevenlabs"
-  }
-
   fun getApiKey(): String {
-    val json = getJson() ?: return ""
-    val provider = json.optString("sttProvider", "elevenlabs")
-    return if (provider == "google") {
-      json.optString("googleCloudApiKey", "")
-    } else {
-      json.optString("elevenLabsApiKey", "")
-    }
+    return getJson()?.optString("elevenLabsApiKey", "") ?: ""
   }
 
   fun getLanguages(): List<String> {
@@ -52,5 +42,9 @@ class ConfigReader(private val context: Context) {
 
   fun getPrimaryLanguage(): String {
     return getJson()?.optString("primaryLanguage", "") ?: ""
+  }
+
+  fun getRealtimeMode(): Boolean {
+    return getJson()?.optBoolean("realtimeMode", true) ?: true
   }
 }

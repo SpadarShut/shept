@@ -16,8 +16,6 @@ export default function HomeScreen() {
   )
   const autoStart = useSettingsStore((state) => state.autoStart)
   const elevenLabsApiKey = useSettingsStore((state) => state.elevenLabsApiKey)
-  const googleCloudApiKey = useSettingsStore((state) => state.googleCloudApiKey)
-  const sttProvider = useSettingsStore((state) => state.sttProvider)
   const hydrate = useSettingsStore((state) => state.hydrate)
 
   const {
@@ -26,8 +24,6 @@ export default function HomeScreen() {
     recheck,
   } = usePrerequisites({
     elevenLabsApiKey,
-    googleCloudApiKey,
-    sttProvider,
   })
 
   const { serviceStatus, serviceRunning, handleToggleService } =

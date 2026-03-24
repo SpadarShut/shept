@@ -1,38 +1,30 @@
-import { View, Text, TouchableOpacity } from "react-native"
+import { View, Text, Switch } from "react-native"
 import { useTranslation } from "react-i18next"
-import type { SheptSettings } from "../../stores/settings-store"
 import { styles } from "./settings-styles"
 
-interface ProviderSectionProperties {
-  sttProvider: SheptSettings["sttProvider"]
-  onSelect: (provider: SheptSettings["sttProvider"]) => void
+interface RealtimeToggleSectionProperties {
+  realtimeMode: boolean
+  onChange: (value: boolean) => void
 }
 
-export function ProviderSection({
-  sttProvider,
-  onSelect,
-}: ProviderSectionProperties) {
+export function RealtimeToggleSection({
+  realtimeMode,
+  onChange,
+}: RealtimeToggleSectionProperties) {
   const { t: tr } = useTranslation()
   return (
     <>
-      <Text style={styles.sectionTitle}>{tr("settings.provider")}</Text>
-      <View style={styles.providerRow}>
-        <TouchableOpacity
-          style={[
-            styles.providerBtn,
-            sttProvider === "elevenlabs" && styles.providerBtnActive,
-          ]}
-          onPress={() => onSelect("elevenlabs")}
-        >
-          <Text
-            style={[
-              styles.providerBtnText,
-              sttProvider === "elevenlabs" && styles.providerBtnTextActive,
-            ]}
-          >
-            {tr("settings.fieldElevenLabs")}
+      <Text style={styles.sectionTitle}>{tr("settings.realtimeMode")}</Text>
+      <View style={styles.autoStartRow}>
+        <View>
+          <Text style={styles.fieldLabel}>
+            {tr("settings.realtimeModeLabel")}
           </Text>
-        </TouchableOpacity>
+          <Text style={styles.autoStartDesc}>
+            {tr("settings.realtimeModeDesc")}
+          </Text>
+        </View>
+        <Switch value={realtimeMode} onValueChange={onChange} />
       </View>
     </>
   )

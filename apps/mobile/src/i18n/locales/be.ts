@@ -22,7 +22,6 @@ const be = {
     setupRequired: "Каб пачаць, наладзьце наступнае:",
   },
   settings: {
-    provider: "Правайдэр",
     apiKeys: "Ключы API",
     fieldElevenLabs: "ElevenLabs",
     enterApiKey: "Увядзіце ключ API",
@@ -31,6 +30,10 @@ const be = {
     searchLanguages: "Пошук моў...",
     autoStart: "Аўтазапуск",
     autoStartDesc: "Запускаць накладку пры старце прыкладання",
+    realtimeMode: "Рэжым транскрыбавання",
+    realtimeModeLabel: "Струменевы рэжым",
+    realtimeModeDesc:
+      "Перадаваць тэкст падчас гаворкі замест транскрыбавання пасля запісу",
     appLanguage: "Мова прыкладання",
     appLanguageSystem: "Сістэмная па змаўчанні",
     appLanguageEnglish: "Англійская",
