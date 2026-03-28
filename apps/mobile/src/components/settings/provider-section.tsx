@@ -16,7 +16,7 @@ export function RealtimeToggleSection({
     <View>
       <Text style={styles.sectionTitle}>{tr("settings.realtimeMode")}</Text>
       <View style={styles.autoStartRow}>
-        <View>
+        <View style={{ flexShrink: 1, gap: 8 }}>
           <Text style={styles.fieldLabel}>
             {tr("settings.realtimeModeLabel")}
           </Text>

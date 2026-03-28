@@ -97,7 +97,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-
     flex: 1,
     paddingVertical: 8,
   },
@@ -105,6 +104,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginTop: 2,
-    flex: 0,
+    flexShrink: 1,
   },
 })

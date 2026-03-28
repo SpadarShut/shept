@@ -11,7 +11,16 @@ export function DemoInputSection() {
 
   return (
     <View style={styles.demoSection}>
-      <Text style={styles.demoLabel}>{tr("home.seeInAction")}</Text>
+      <View style={styles.demoHeader}>
+        <Text style={styles.demoLabel}>{tr("home.seeInAction")}</Text>
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={() => inputReference.current?.clear()}
+        >
+          <Text style={styles.clearButtonText}>{tr("home.clear")}</Text>
+        </TouchableOpacity>
+      </View>
+
       <TextInput
         ref={inputReference}
         style={styles.demoInput}
@@ -21,12 +30,6 @@ export function DemoInputSection() {
         numberOfLines={DEMO_INPUT_LINES}
         textAlignVertical="top"
       />
-      <TouchableOpacity
-        style={styles.clearButton}
-        onPress={() => inputReference.current?.clear()}
-      >
-        <Text style={styles.clearButtonText}>{tr("home.clear")}</Text>
-      </TouchableOpacity>
     </View>
   )
 }

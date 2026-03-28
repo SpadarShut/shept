@@ -8,9 +8,9 @@ export const homeScreenStyles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: "flex-start",
-    alignItems: "center",
+    alignItems: "stretch",
     paddingVertical: 40,
-    paddingBottom: 80,
+    paddingHorizontal: 16,
   },
   title: {
     fontSize: 32,
@@ -26,7 +26,6 @@ export const homeScreenStyles = StyleSheet.create({
     padding: 24,
     borderRadius: 12,
     backgroundColor: "#f5f5f5",
-    width: "80%",
   },
   statusHeader: {
     flexDirection: "row",
@@ -67,15 +66,15 @@ export const homeScreenStyles = StyleSheet.create({
   },
   demoSection: {
     marginTop: 32,
-    width: "80%",
+  },
+  demoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
   demoLabel: {
-    fontSize: 13,
     color: "#666",
-    marginBottom: 8,
-    textAlign: "center",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
   },
   demoInput: {
     borderWidth: 1,
