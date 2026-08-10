@@ -15,6 +15,10 @@ class StreamingTranscriptionSession(
     private var audioCapture: PcmAudioCapture? = null
     var onComplete: (() -> Unit)? = null
 
+    /** Accumulated committed text across all VAD segments in this session. */
+    var accumulatedText: String = ""
+        private set
+
     fun start() {
         val client = RealtimeSttClient(apiKey, language, this)
         sttClient = client
@@ -34,8 +38,12 @@ class StreamingTranscriptionSession(
 
     fun stop() {
         audioCapture?.stop()
-        sttClient?.commitAndClose()
-        Log.d(TAG, "Streaming session stopping, waiting for final transcript")
+        audioCapture = null
+        AccessibilityBridge.discardAndEndSession()
+        sttClient?.close()
+        sttClient = null
+        Log.d(TAG, "Streaming session stopped, uncommitted partial discarded")
+        onComplete?.invoke()
     }
 
     fun cancel() {
@@ -51,14 +59,16 @@ class StreamingTranscriptionSession(
     }
 
     override fun onCommittedTranscript(text: String) {
-        AccessibilityBridge.commitPartialText(text)
-        sttClient?.close()
+        accumulatedText += text
+        AccessibilityBridge.advanceStreamingSegment(text)
+        Log.d(TAG, "VAD committed segment: \"$text\", total: \"$accumulatedText\"")
     }
 
     override fun onError(message: String) {
         Log.e(TAG, "STT error: $message")
         audioCapture?.stop()
-        AccessibilityBridge.commitPartialText("")
+        audioCapture = null
+        AccessibilityBridge.discardAndEndSession()
         onComplete?.invoke()
     }
 

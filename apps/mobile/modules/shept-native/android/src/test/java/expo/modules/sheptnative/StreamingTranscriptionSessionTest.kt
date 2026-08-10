@@ -2,6 +2,7 @@ package expo.modules.sheptnative
 
 import io.mockk.*
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -22,11 +23,11 @@ import org.robolectric.annotation.Config
  * Tests:
  *  1. start() connects WebSocket and starts audio capture
  *  2. audio chunks forwarded to sendAudioChunk
- *  3. stop() stops capture and calls commitAndClose
+ *  3. stop() stops capture, discards partial, closes without commit
  *  4. cancel() stops capture and cancels WebSocket
  *  5. onPartialTranscript → AccessibilityBridge.updatePartialText
- *  6. onCommittedTranscript → AccessibilityBridge.commitPartialText
- *  7. onError → stops capture, calls commitPartialText("")
+ *  6. onCommittedTranscript → AccessibilityBridge.advanceStreamingSegment (VAD)
+ *  7. onError → stops capture, discards partial text
  *  8. cancel() after start() does not crash
  */
 @RunWith(RobolectricTestRunner::class)
@@ -48,7 +49,7 @@ class StreamingTranscriptionSessionTest {
         // Stub RealtimeSttClient methods
         every { anyConstructed<RealtimeSttClient>().connect() } just Runs
         every { anyConstructed<RealtimeSttClient>().sendAudioChunk(any()) } just Runs
-        every { anyConstructed<RealtimeSttClient>().commitAndClose() } just Runs
+        every { anyConstructed<RealtimeSttClient>().close() } just Runs
         every { anyConstructed<RealtimeSttClient>().cancel() } just Runs
 
         // Stub PcmAudioCapture — capture the onChunk lambda
@@ -57,7 +58,8 @@ class StreamingTranscriptionSessionTest {
 
         // Stub AccessibilityBridge streaming methods
         every { AccessibilityBridge.updatePartialText(any()) } returns true
-        every { AccessibilityBridge.commitPartialText(any()) } just Runs
+        every { AccessibilityBridge.advanceStreamingSegment(any()) } just Runs
+        every { AccessibilityBridge.discardAndEndSession() } just Runs
     }
 
     @After
@@ -114,14 +116,15 @@ class StreamingTranscriptionSessionTest {
     // ── 3. stop ───────────────────────────────────────────────────────────────
 
     @Test
-    fun `stop stops PcmAudioCapture and calls RealtimeSttClient commitAndClose`() {
+    fun `stop discards partial text and closes without committing`() {
         val session = StreamingTranscriptionSession(apiKey, language)
         session.start()
         (session as RealtimeSttListener).onConnected()
         session.stop()
 
         verify(exactly = 1) { anyConstructed<PcmAudioCapture>().stop() }
-        verify(exactly = 1) { anyConstructed<RealtimeSttClient>().commitAndClose() }
+        verify(exactly = 1) { AccessibilityBridge.discardAndEndSession() }
+        verify(exactly = 1) { anyConstructed<RealtimeSttClient>().close() }
     }
 
     // ── 4. cancel ─────────────────────────────────────────────────────────────
@@ -154,19 +157,22 @@ class StreamingTranscriptionSessionTest {
     // ── 6. committed transcript → commitPartialText ───────────────────────────
 
     @Test
-    fun `committed transcript calls AccessibilityBridge commitPartialText`() {
+    fun `committed transcript calls advanceStreamingSegment and accumulates text`() {
         val session = StreamingTranscriptionSession(apiKey, language)
         session.start()
 
-        (session as RealtimeSttListener).onCommittedTranscript("final text")
+        (session as RealtimeSttListener).onCommittedTranscript("hello ")
+        (session as RealtimeSttListener).onCommittedTranscript("world")
 
-        verify(exactly = 1) { AccessibilityBridge.commitPartialText("final text") }
+        verify(exactly = 1) { AccessibilityBridge.advanceStreamingSegment("hello ") }
+        verify(exactly = 1) { AccessibilityBridge.advanceStreamingSegment("world") }
+        assertEquals("hello world", session.accumulatedText)
     }
 
     // ── 7. error → graceful degradation ───────────────────────────────────────
 
     @Test
-    fun `error stops capture and calls commitPartialText with empty string`() {
+    fun `error stops capture and discards partial text`() {
         val session = StreamingTranscriptionSession(apiKey, language)
         session.start()
         (session as RealtimeSttListener).onConnected()
@@ -174,7 +180,7 @@ class StreamingTranscriptionSessionTest {
         (session as RealtimeSttListener).onError("Connection failed")
 
         verify(exactly = 1) { anyConstructed<PcmAudioCapture>().stop() }
-        verify(exactly = 1) { AccessibilityBridge.commitPartialText("") }
+        verify(exactly = 1) { AccessibilityBridge.discardAndEndSession() }
     }
 
     // ── 8. cancel idempotency ─────────────────────────────────────────────────

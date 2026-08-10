@@ -165,19 +165,6 @@ class RealtimeSttClientTest {
     }
 
     @Test
-    fun `commitAndClose sends single commit chunk`() {
-        client.commitAndClose()
-
-        val slot = slot<String>()
-        verify(exactly = 1) { mockWebSocket.send(capture(slot)) }
-
-        val json = JSONObject(slot.captured)
-        assertEquals("input_audio_chunk", json.getString("message_type"))
-        assertEquals(true, json.getBoolean("commit"))
-        assertEquals(16000, json.getInt("sample_rate"))
-    }
-
-    @Test
     fun `onOpen calls listener onConnected`() {
         val mockResponse = mockk<Response>(relaxed = true)
         wsListener.onOpen(mockWebSocket, mockResponse)

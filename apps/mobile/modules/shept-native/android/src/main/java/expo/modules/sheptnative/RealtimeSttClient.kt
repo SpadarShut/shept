@@ -27,7 +27,7 @@ class RealtimeSttClient(
 ) {
     companion object {
         private const val TAG = "RealtimeSttClient"
-        private const val URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&encoding=pcm_s16le&sample_rate=16000"
+        private const val URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&encoding=pcm_s16le&sample_rate=16000&commit_strategy=vad&vad_silence_threshold_secs=1.5&vad_threshold=0.4"
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -65,6 +65,10 @@ class RealtimeSttClient(
                             val committed = json.optString("text", "")
                             mainHandler.post { listener.onCommittedTranscript(committed) }
                         }
+                        "session_started" -> {
+                            val config = json.optJSONObject("config")
+                            Log.d(TAG, "Session started, commit_strategy: ${config?.optString("commit_strategy")}")
+                        }
                         else -> Log.d(TAG, "Unhandled message type: $type")
                     }
                 } catch (e: Exception) {
@@ -96,17 +100,6 @@ class RealtimeSttClient(
             put("sample_rate", 16000)
         }
         webSocket?.send(msg.toString())
-    }
-
-    fun commitAndClose() {
-        val msg = JSONObject().apply {
-            put("message_type", "input_audio_chunk")
-            put("audio_base_64", "")
-            put("commit", true)
-            put("sample_rate", 16000)
-        }
-        webSocket?.send(msg.toString())
-        Log.d(TAG, "Sent commit chunk")
     }
 
     fun close() {

@@ -49,6 +49,7 @@ object AccessibilityBridge {
     private var partialLength: Int = 0
     private var lastPartialText: String = ""
     private var partialInjectionDisabled: Boolean = false
+    private var needsOffsetCapture: Boolean = false
 
     @Synchronized
     fun addObserver(observer: FocusObserver) {
@@ -93,6 +94,14 @@ object AccessibilityBridge {
             Log.w(TAG, "Focused node stale during streaming, clearing")
             focusedNode = null
             return false
+        }
+
+        // Re-capture cursor position at the start of a new segment (after VAD commit)
+        if (needsOffsetCapture && partialLength == 0) {
+            val sel = node.textSelectionEnd
+            partialStartOffset = if (sel < 0) 0 else sel
+            needsOffsetCapture = false
+            Log.d(TAG, "Re-captured cursor offset for new segment: $partialStartOffset")
         }
 
         val existing = getNodeContent(node)
@@ -154,6 +163,68 @@ object AccessibilityBridge {
         lastPartialText = ""
         partialInjectionDisabled = false
         isStreaming = false
+    }
+
+    /**
+     * Called on each VAD commit during a streaming session.
+     * Finalizes current partial text but keeps the session alive for the next segment.
+     */
+    fun advanceStreamingSegment(finalText: String) {
+        val injected = if (partialInjectionDisabled) {
+            false
+        } else {
+            updatePartialText(finalText)
+        }
+
+        if (!injected && finalText.isNotEmpty()) {
+            injectText(finalText)
+        }
+
+        // Reset partial tracking for next segment, but keep session alive
+        partialLength = 0
+        lastPartialText = ""
+        partialInjectionDisabled = false
+        needsOffsetCapture = true
+        Log.d(TAG, "Advanced streaming segment, ready for next speech")
+    }
+
+    /**
+     * Called on stop: discards any uncommitted partial text and ends the session.
+     */
+    fun discardAndEndSession() {
+        if (partialLength > 0 && !partialInjectionDisabled) {
+            val node = focusedNode
+            if (node != null && node.refresh()) {
+                val existing = getNodeContent(node)
+                val safeStart = partialStartOffset.coerceAtMost(existing.length)
+                val safeEnd = (partialStartOffset + partialLength).coerceAtMost(existing.length)
+                val prefix = existing.substring(0, safeStart)
+                val suffix = existing.substring(safeEnd)
+                val merged = prefix + suffix
+
+                val args = Bundle().apply {
+                    putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, merged)
+                }
+                if (node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)) {
+                    // Restore cursor to where the partial started
+                    val selArgs = Bundle().apply {
+                        putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, safeStart)
+                        putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, safeStart)
+                    }
+                    node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selArgs)
+                    Log.d(TAG, "Discarded uncommitted partial text")
+                }
+            }
+        }
+
+        // Reset all streaming state
+        partialStartOffset = 0
+        partialLength = 0
+        lastPartialText = ""
+        partialInjectionDisabled = false
+        needsOffsetCapture = false
+        isStreaming = false
+        Log.d(TAG, "Streaming session ended")
     }
 
     @Synchronized
