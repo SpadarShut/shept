@@ -308,7 +308,10 @@ class OverlayService : Service(), AccessibilityBridge.FocusObserver {
                     try {
                         val provider = configReader.getProvider()
                         val apiKey = configReader.getApiKey()
-                        val language = configReader.getPrimaryLanguage().ifEmpty { "en" }
+                        val keyboardLang = KeyboardLanguageDetector.detectCurrentLanguage(this@OverlayService)
+                        val settingsLang = configReader.getPrimaryLanguage().ifEmpty { null }
+                        val language = keyboardLang ?: settingsLang ?: "en"
+                        Log.d(TAG, "Language resolution: keyboard=$keyboardLang, settings=$settingsLang, using=$language")
                         if (apiKey.isEmpty()) {
                             throw SttException("No API key configured", 0)
                         }
